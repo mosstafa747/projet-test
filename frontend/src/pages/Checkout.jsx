@@ -38,14 +38,14 @@ export default function Checkout() {
   }, []);
 
   const selectedMethod = shippingMethods.find(m => m.id.toString() === form.delivery_method);
-  const subtotal = items.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0);
+  const subtotal = items.reduce((s, i) => s + (i.variant ? Number(i.variant.price_modifier) + Number(i.product.price) : Number(i.product.price)) * Number(i.quantity), 0);
   const shippingCost = appliedCoupon?.type === 'free_shipping' ? 0 : (selectedMethod?.price || 0);
   const discountAmount = appliedCoupon?.type === 'fixed' ? Number(appliedCoupon.value) : 
                         appliedCoupon?.type === 'percentage' ? (subtotal * Number(appliedCoupon.value) / 100) : 0;
 
   const taxRate = form.shipping_country?.toLowerCase() !== 'morocco' ? 0.20 : 0;
   const taxAmount = subtotal * taxRate;
-  const finalTotal = Math.max(0, subtotal + shippingCost + taxAmount - (appliedCoupon?.type === 'free_shipping' ? 0 : discountAmount));
+  const finalTotal = Math.max(0, Number(subtotal) + Number(shippingCost) + taxAmount - (appliedCoupon?.type === 'free_shipping' ? 0 : discountAmount));
 
   const update = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -54,7 +54,7 @@ export default function Checkout() {
     setValidatingCoupon(true);
     try {
       const { data } = await api.post('/coupons/validate', { code: couponCode, amount: subtotal });
-      setAppliedCoupon(data);
+      setAppliedCoupon(data.coupon);
     } catch (err) {
       alert(err.response?.data?.message || 'Invalid coupon');
       setAppliedCoupon(null);
@@ -72,7 +72,11 @@ export default function Checkout() {
     setLoading(true);
     try {
       const payload = {
-        items: items.map((i) => ({ product_id: i.productId, quantity: i.quantity })),
+        items: items.map((i) => ({ 
+          product_id: i.productId, 
+          product_variant_id: i.variantId || null, 
+          quantity: i.quantity 
+        })),
         coupon_code: appliedCoupon?.code,
         ...form,
       };
@@ -311,10 +315,11 @@ export default function Checkout() {
                                </div>
                                <div>
                                   <p className="text-sm font-bold text-wood">{i.product.name}</p>
-                                  <p className="text-[10px] text-wood/40 uppercase font-bold tracking-widest">Qty: {i.quantity}</p>
+                                  {i.variant && <p className="text-[9px] text-wood/60 uppercase font-bold tracking-widest">{i.variant.name}</p>}
+                                  <p className="text-[10px] text-wood/40 uppercase font-bold tracking-widest mt-0.5">Qty: {i.quantity}</p>
                                </div>
                             </div>
-                            <span className="text-sm font-bold text-wood">{(Number(i.product.price) * i.quantity).toLocaleString()} <span className="text-[10px]">MAD</span></span>
+                            <span className="text-sm font-bold text-wood">{((i.variant ? Number(i.variant.price_modifier) + Number(i.product.price) : Number(i.product.price)) * i.quantity).toLocaleString()} <span className="text-[10px]">MAD</span></span>
                           </div>
                         ))}
                       </div>
@@ -385,7 +390,7 @@ export default function Checkout() {
                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
                            Gift Certificate Applied
                         </span>
-                        <span className="font-bold">-{discountAmount.toLocaleString()} MAD</span>
+                        <span className="font-bold">-{formatPrice(discountAmount)}</span>
                      </div>
                    )}
                    <div className="pt-8 border-t border-wood/5 flex justify-between items-end">

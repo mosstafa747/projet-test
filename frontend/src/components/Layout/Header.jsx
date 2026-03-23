@@ -7,11 +7,12 @@ import { useWishlistStore } from '../../store/useWishlistStore';
 import { useState } from 'react';
 
 const nav = [
-  { to: '/products', label: 'Shop' },
-  { to: '/categories', label: 'Categories' },
-  { to: '/custom-request', label: 'Custom Furniture' },
-  { to: '/about', label: 'About' },
-  { to: '/contact', label: 'Contact' },
+  { to: '/', label: 'home' },
+  { to: '/Products', label: 'Shop' },
+  { to: '/Categories', label: 'Categories' },
+  { to: '/Custom-request', label: 'Custom Furniture' },
+  { to: '/About', label: 'About' },
+  { to: '/Contact', label: 'Contact' },
 ];
 
 export default function Header() {

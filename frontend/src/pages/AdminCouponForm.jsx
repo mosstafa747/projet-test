@@ -2,10 +2,19 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../lib/api';
+import { useAuthStore } from '../store/useAuthStore';
 
 export default function AdminCouponForm() {
+  const { user } = useAuthStore();
   const { id } = useParams();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && !user.is_admin) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
+
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     code: '',
@@ -47,79 +56,84 @@ export default function AdminCouponForm() {
     }
   };
 
+  if (loading) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+       <div className="w-10 h-10 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
   return (
-    <div className="bg-[#FBF9F6] min-h-screen pb-40">
-       <nav className="max-w-7xl mx-auto px-6 pt-12 flex gap-2 text-[10px] uppercase tracking-widest text-wood/40 font-bold mb-20">
-        <Link to="/" className="hover:text-gold transition">Home</Link>
+    <div className="bg-[#F9FAFB] min-h-screen pb-20 font-sans">
+       <nav className="max-w-4xl mx-auto px-6 pt-10 flex gap-2 text-[11px] uppercase tracking-wider text-gray-400 font-bold mb-10">
+        <Link to="/" className="hover:text-yellow-600 transition">Home</Link>
         <span>/</span>
-        <Link to="/admin" className="hover:text-gold transition">Master Atelier</Link>
+        <Link to="/admin" className="hover:text-yellow-600 transition">Dashboard</Link>
         <span>/</span>
-        <span className="text-gold">{id ? 'Refine Registry Key' : 'Forge New Key'}</span>
+        <span className="text-yellow-600">{id ? 'Edit Coupon' : 'Create New Coupon'}</span>
       </nav>
 
-      <div className="max-w-3xl mx-auto px-6">
-        <header className="mb-20 space-y-4">
-           <span className="text-gold font-bold uppercase tracking-[0.3em] text-[11px] block">Registry Access Control</span>
-           <h1 className="font-heading text-6xl text-wood font-bold">{id ? 'Key Refinement' : 'Registry Key Forging'}</h1>
-           <p className="text-wood/40 italic font-serif">Curating exclusive access and artisan incentives.</p>
+      <div className="max-w-4xl mx-auto px-6">
+        <header className="mb-10">
+           <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">{id ? 'Edit Coupon' : 'Create New Coupon'}</h1>
+           <p className="text-gray-500 font-medium">Manage your promotional offers and {id ? 'update existive incentives' : 'forge new keys for artisan savings'}.</p>
         </header>
 
         <motion.div
            initial={{ opacity: 0, y: 20 }}
            animate={{ opacity: 1, y: 0 }}
-           className="glass-panel p-12 md:p-16 rounded-[4rem] shadow-premium border-white/60"
+           className="bg-white p-10 md:p-12 rounded-3xl shadow-sm border border-gray-100"
         >
           <form onSubmit={handleSubmit} className="space-y-12">
              <div className="grid md:grid-cols-2 gap-12">
-                <div className="space-y-6">
-                   <h3 className="text-[10px] uppercase font-bold tracking-[0.3em] text-wood/30 border-b border-wood/5 pb-4">Key Identity</h3>
+                <div className="space-y-8">
+                   <h3 className="text-xs uppercase font-bold tracking-widest text-gray-400 border-b border-gray-50 pb-4">Coupon Identity</h3>
                    
-                   <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-wood/60 ml-2">Secret Code</label>
+                   <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-700 ml-1">Secret Code</label>
                       <input
                         type="text"
                         required
-                        className="premium-input w-full bg-white/50 font-mono uppercase tracking-widest"
+                        className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-gray-900 text-sm font-mono uppercase tracking-widest focus:ring-2 focus:ring-yellow-400 transition-all outline-none"
                         placeholder="e.g. ATLAS20"
                         value={formData.code}
                         onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                       />
                    </div>
 
-                   <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-wood/60 ml-2">Heritage Class (Type)</label>
+                   <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-700 ml-1">Reward Type</label>
                       <select
-                        className="premium-input w-full bg-white/50 appearance-none"
+                        className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-gray-900 text-sm focus:ring-2 focus:ring-yellow-400 transition-all outline-none appearance-none cursor-pointer"
                         value={formData.type}
                         onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                       >
-                        <option value="percentage">Percentage (%)</option>
+                        <option value="percentage">Percentage Off (%)</option>
                         <option value="fixed">Fixed Amount (MAD)</option>
                         <option value="free_shipping">Free Shipping</option>
                       </select>
                    </div>
                 </div>
 
-                <div className="space-y-6">
-                   <h3 className="text-[10px] uppercase font-bold tracking-[0.3em] text-wood/30 border-b border-wood/5 pb-4">Key Logistics</h3>
+                <div className="space-y-8">
+                   <h3 className="text-xs uppercase font-bold tracking-widest text-gray-400 border-b border-gray-50 pb-4">Redemption Logistics</h3>
                    
-                   <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-wood/60 ml-2">Valuation / Value</label>
+                   <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-700 ml-1">Benefit Value</label>
                       <input
                         type="number"
                         required
-                        className="premium-input w-full bg-white/50"
+                        className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-gray-900 text-sm focus:ring-2 focus:ring-yellow-400 transition-all outline-none"
                         value={formData.value}
                         onChange={(e) => setFormData({ ...formData, value: e.target.value })}
                         disabled={formData.type === 'free_shipping'}
                       />
                    </div>
 
-                   <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-wood/60 ml-2">Sunset Date (Expiry)</label>
+                   <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-700 ml-1">Expiration Date</label>
                       <input
                         type="date"
-                        className="premium-input w-full bg-white/50"
+                        className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-gray-900 text-sm focus:ring-2 focus:ring-yellow-400 transition-all outline-none"
                         value={formData.expiry_date}
                         onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
                       />
@@ -128,27 +142,27 @@ export default function AdminCouponForm() {
              </div>
 
              <div className="grid md:grid-cols-2 gap-12">
-                <div className="space-y-6">
-                   <h3 className="text-[10px] uppercase font-bold tracking-[0.3em] text-wood/30 border-b border-wood/5 pb-4">Usage Thresholds</h3>
-                   <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-wood/60 ml-2">Registry Limit</label>
+                <div className="space-y-8">
+                   <h3 className="text-xs uppercase font-bold tracking-widest text-gray-400 border-b border-gray-50 pb-4">Usage Limits</h3>
+                   <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-700 ml-1">Total Redemptions Allowed</label>
                       <input
                         type="number"
-                        className="premium-input w-full bg-white/50"
+                        className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-gray-900 text-sm focus:ring-2 focus:ring-yellow-400 transition-all outline-none"
                         value={formData.usage_limit}
                         onChange={(e) => setFormData({ ...formData, usage_limit: e.target.value })}
-                        placeholder="Unlimited usage"
+                        placeholder="Leave empty for unlimited"
                       />
                    </div>
                 </div>
 
-                <div className="space-y-6">
-                   <h3 className="text-[10px] uppercase font-bold tracking-[0.3em] text-wood/30 border-b border-wood/5 pb-4">Minimum Valuation</h3>
-                   <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-wood/60 ml-2">Min order value (MAD)</label>
+                <div className="space-y-8">
+                   <h3 className="text-xs uppercase font-bold tracking-widest text-gray-400 border-b border-gray-50 pb-4">Minimum Requirement</h3>
+                   <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-700 ml-1">Min Order Value (MAD)</label>
                       <input
                         type="number"
-                        className="premium-input w-full bg-white/50"
+                        className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-gray-900 text-sm focus:ring-2 focus:ring-yellow-400 transition-all outline-none"
                         value={formData.min_order_value}
                         onChange={(e) => setFormData({ ...formData, min_order_value: e.target.value })}
                       />
@@ -156,36 +170,52 @@ export default function AdminCouponForm() {
                 </div>
              </div>
 
-             <div className="flex items-center gap-4 py-4 px-6 bg-wood/5 rounded-3xl border border-wood/10 w-fit">
-                <input
-                  type="checkbox"
-                  id="is_active"
-                  className="w-5 h-5 accent-gold cursor-pointer"
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                />
-                <label htmlFor="is_active" className="text-[11px] uppercase font-bold tracking-widest text-wood cursor-pointer">Key is Currently Active</label>
+             <div className="flex items-center gap-4 py-6 px-10 bg-gray-50 rounded-2xl border border-gray-100 w-fit">
+                <div className="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                   <input
+                     type="checkbox"
+                     id="is_active"
+                     className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-2 border-gray-300 appearance-none cursor-pointer checked:right-0 checked:border-yellow-500"
+                     checked={formData.is_active}
+                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                   />
+                   <label htmlFor="is_active" className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                </div>
+                <label htmlFor="is_active" className="text-xs font-bold text-gray-700 cursor-pointer">Coupon is Currently Active</label>
              </div>
 
-             <div className="flex justify-between items-center pt-12 border-t border-wood/5">
+             <div className="flex justify-between items-center pt-10 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => navigate('/admin')}
-                  className="text-[10px] uppercase font-bold tracking-widest text-wood/40 hover:text-wood transition-colors"
+                  className="px-8 py-4 text-sm font-bold text-gray-400 hover:text-gray-900 transition-colors"
                 >
                   Discard Changes
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="premium-button bg-wood text-cream min-w-[240px] shadow-xl"
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 px-12 rounded-2xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Preserving Key...' : (id ? 'Finalize Refinement' : 'Forge Secret Key')}
+                  {loading ? 'Saving...' : (id ? 'Save Changes' : 'Forge Coupon')}
                 </button>
              </div>
           </form>
         </motion.div>
       </div>
+      <style>{`
+        .toggle-checkbox:checked {
+          right: 0;
+          border-color: #eab308;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+          background-color: #facc15;
+        }
+        .toggle-checkbox {
+          right: auto;
+          transition: all 0.3s ease-in-out;
+        }
+      `}</style>
     </div>
   );
 }

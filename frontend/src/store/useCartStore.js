@@ -4,31 +4,42 @@ import { persist } from 'zustand/middleware';
 export const useCartStore = create(
   persist(
     (set) => ({
-      items: [], // { productId, product: { id, name, price, images }, quantity }
-      addItem: (product, quantity = 1) =>
+      items: [], // { cartItemId, productId, variantId, product, variant, quantity }
+      addItem: (product, quantity = 1, variant = null) =>
         set((state) => {
-          const existing = state.items.find((i) => i.productId === product.id);
-          let next;
+          const cartItemId = variant ? `${product.id}_${variant.id}` : `${product.id}`;
+          const existing = state.items.find((i) => i.cartItemId === cartItemId);
+          
           if (existing) {
-            next = state.items.map((i) =>
-              i.productId === product.id ? { ...i, quantity: i.quantity + quantity } : i
-            );
+            return {
+              items: state.items.map((i) =>
+                i.cartItemId === cartItemId ? { ...i, quantity: i.quantity + quantity } : i
+              )
+            };
           } else {
-            next = [...state.items, { productId: product.id, product, quantity }];
+            return {
+              items: [...state.items, { 
+                cartItemId, 
+                productId: product.id, 
+                variantId: variant ? variant.id : null,
+                product, 
+                variant, 
+                quantity 
+              }]
+            };
           }
-          return { items: next };
         }),
-      updateQuantity: (productId, quantity) =>
+      updateQuantity: (cartItemId, quantity) =>
         set((state) => {
-          if (quantity <= 0) return { items: state.items.filter((i) => i.productId !== productId) };
+          if (quantity <= 0) return { items: state.items.filter((i) => i.cartItemId !== cartItemId) };
           return {
             items: state.items.map((i) =>
-              i.productId === productId ? { ...i, quantity } : i
+              i.cartItemId === cartItemId ? { ...i, quantity } : i
             ),
           };
         }),
-      removeItem: (productId) =>
-        set((state) => ({ items: state.items.filter((i) => i.productId !== productId) })),
+      removeItem: (cartItemId) =>
+        set((state) => ({ items: state.items.filter((i) => i.cartItemId !== cartItemId) })),
       clearCart: () => set({ items: [] }),
     }),
     { name: 'cart' }

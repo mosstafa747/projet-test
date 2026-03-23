@@ -13,6 +13,7 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const addItem = useCartStore((s) => s.addItem);
   const user = useAuthStore((s) => s.user);
   const { formatPrice, currency } = useCurrencyStore();
@@ -23,6 +24,9 @@ export default function ProductDetail() {
   useEffect(() => {
     api.get(`/products/${id}`).then((r) => {
       setProduct(r.data);
+      if (r.data.variants && r.data.variants.length > 0) {
+          setSelectedVariant(r.data.variants[0]);
+      }
       setLoading(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }).catch(() => setLoading(false));
@@ -61,6 +65,17 @@ export default function ProductDetail() {
   }
 
   const images = product.images?.length ? product.images : ['https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800'];
+  const hasVariants = product.variants && product.variants.length > 0;
+  
+  const currentPrice = hasVariants && selectedVariant
+    ? Number(product.price) + Number(selectedVariant.price_modifier)
+    : Number(product.price);
+    
+  const currentStock = hasVariants && selectedVariant
+    ? selectedVariant.stock
+    : product.stock;
+    
+  const isOutOfStock = currentStock <= 0;
 
   return (
     <div className="bg-cream min-h-screen">
@@ -133,7 +148,7 @@ export default function ProductDetail() {
             </div>
 
             <div className="text-3xl font-bold text-wood">
-               {formatPrice(product.price)}
+               {formatPrice(currentPrice)}
             </div>
 
             <p className="text-wood/70 text-lg leading-relaxed max-w-xl">
@@ -141,6 +156,29 @@ export default function ProductDetail() {
             </p>
 
             <div className="space-y-8">
+              
+              {/* Variations */}
+              {hasVariants && (
+                 <div className="space-y-4 pt-4">
+                    <label className="text-[10px] uppercase tracking-widest font-bold text-wood/40">Select Variation</label>
+                    <div className="flex flex-wrap gap-3">
+                       {product.variants.map((variant) => (
+                          <button
+                            key={variant.id}
+                            onClick={() => setSelectedVariant(variant)}
+                            className={`px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${
+                              selectedVariant && selectedVariant.id === variant.id 
+                                ? 'bg-wood text-cream shadow-xl scale-105' 
+                                : 'bg-transparent text-wood border border-wood/20 hover:border-gold hover:text-gold'
+                            } ${variant.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                             {variant.name} {variant.price_modifier > 0 ? `(+${formatPrice(variant.price_modifier)})` : ''}
+                          </button>
+                       ))}
+                    </div>
+                 </div>
+              )}
+
               {/* Quantity */}
               <div className="space-y-4">
                 <label className="text-[10px] uppercase tracking-widest font-bold text-wood/40">Quantity</label>
@@ -155,11 +193,11 @@ export default function ProductDetail() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   type="button"
-                  onClick={() => addItem(product, quantity)}
-                  disabled={!product.in_stock}
-                  className="flex-1 premium-button bg-wood text-cream hover:bg-wood/90 py-5 text-sm font-bold uppercase tracking-widest"
+                  onClick={() => addItem(product, quantity, selectedVariant)}
+                  disabled={isOutOfStock}
+                  className="flex-1 premium-button bg-wood text-cream hover:bg-wood/90 py-5 text-sm font-bold uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {product.in_stock ? 'Add to Collection' : 'Sold Out'}
+                  {!isOutOfStock ? 'Add to Collection' : 'Sold Out'}
                 </button>
                 <button
                   className="premium-button border-wood group flex items-center justify-center gap-3 py-5 text-sm font-bold uppercase tracking-widest"
@@ -179,6 +217,12 @@ export default function ProductDetail() {
                  <p className="text-[10px] uppercase tracking-widest text-wood/40 font-bold">Dimensions</p>
                  <p className="text-[13px] text-wood font-medium">{product.dimensions || '120cm x 80cm x 45cm'}</p>
                </div>
+               {(product.sku || (selectedVariant && selectedVariant.sku)) && (
+                   <div className="space-y-1 col-span-2 pt-2">
+                     <p className="text-[10px] uppercase tracking-widest text-wood/40 font-bold">SKU</p>
+                     <p className="text-[13px] text-wood font-mono">{(selectedVariant && selectedVariant.sku) ? selectedVariant.sku : product.sku}</p>
+                   </div>
+               )}
             </div>
           </div>
         </div>

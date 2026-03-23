@@ -82,4 +82,34 @@ class OrderController extends Controller
         AuditLogger::log('order_refunded', $order, $validated);
         return response()->json($order->load('items.product'));
     }
+
+    public function export(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $orders = Order::with('user:id,name,email')->latest()->get();
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="orders_export_' . now()->format('Y-m-d_H-i-s') . '.csv"',
+        ];
+
+        return response()->stream(function () use ($orders) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Order ID', 'Order Number', 'Date', 'Customer', 'Email', 'Total Price', 'Status', 'Shipping City', 'Payment Status']);
+
+            foreach ($orders as $order) {
+                fputcsv($file, [
+                    $order->id,
+                    $order->order_number,
+                    $order->created_at->format('Y-m-d H:i:s'),
+                    $order->user?->name ?? 'Guest',
+                    $order->user?->email ?? $order->shipping_email ?? 'N/A',
+                    $order->total_price,
+                    strtoupper($order->status),
+                    $order->shipping_city,
+                    $order->payment_status ?? 'N/A'
+                ]);
+            }
+            fclose($file);
+        }, 200, $headers);
+    }
 }

@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 /**
  * @OA\Tag(name="Auth", description="API Endpoints for Authentication")
  */
-class AuthController extends Controller
+class n extends Controller
 {
     /**
      * @OA\Post(

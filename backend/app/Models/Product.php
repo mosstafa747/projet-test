@@ -14,7 +14,7 @@ class Product extends Model
     protected $fillable = [
         'name', 'price', 'description', 'category', 'images', 'stock',
         'materials', 'dimensions', 'rating', 'sales_count',
-        'low_stock_threshold', 'in_stock',
+        'low_stock_threshold', 'in_stock', 'sku'
     ];
 
     protected static function booted()
@@ -46,5 +46,10 @@ class Product extends Model
     public function wishlistedBy(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'wishlist')->withTimestamps();
+    }
+
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class);
     }
 }
