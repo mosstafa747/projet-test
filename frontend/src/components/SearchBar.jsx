@@ -65,22 +65,25 @@ export default function SearchBar({ minimal = false }) {
   };
 
   return (
-    <div className={`relative ${minimal ? 'w-48 xl:w-64' : 'w-full max-w-sm'}`} ref={menuRef}>
+    <div className={`relative ${minimal ? 'w-48 xl:w-64' : 'w-full max-w-2xl'}`} ref={menuRef}>
       <form onSubmit={handleSearch} className="relative group">
         <input
           id="global-search-input"
           name="q"
           type="text"
           autoComplete="off"
-          placeholder={minimal ? "Search..." : "Search products, materials..."}
-          className="premium-input w-full pl-12"
+          placeholder={minimal ? "Search..." : "I am shopping for..."}
+          className="w-full h-10 md:h-11 pl-4 pr-12 rounded-full border-2 border-[#E62E04] focus:outline-none text-sm placeholder-gray-400"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => (query.length >= 2 || (recentSearches.length > 0 && !minimal)) && setShowSuggestions(true)}
         />
-        <svg className={`absolute ${minimal ? 'left-2 top-2 w-3.5 h-3.5' : 'left-3 top-2.5 w-4 h-4'} text-wood/40 group-focus-within:text-gold transition-colors`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+        <button 
+            type="submit"
+            className="absolute right-1 top-1 h-8 md:h-9 px-4 bg-[#E62E04] text-white rounded-full flex items-center justify-center hover:bg-[#D62803] transition-colors"
+        >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        </button>
       </form>
 
       <AnimatePresence>
@@ -89,23 +92,23 @@ export default function SearchBar({ minimal = false }) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="absolute top-full left-0 right-0 mt-3 glass-panel rounded-2xl shadow-xl z-50 overflow-hidden min-w-[300px]"
+            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl z-50 overflow-hidden border border-gray-100 min-w-[300px]"
           >
             <ul className="flex flex-col py-2">
               {query.length < 2 && recentSearches.length > 0 && !minimal && (
                 <>
-                  <li className="px-5 py-2 text-[10px] font-bold text-wood/40 uppercase tracking-widest bg-beige/10">Recent Searches</li>
+                  <li className="px-5 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50">Recent Searches</li>
                   {recentSearches.map((s) => (
                     <li key={s}>
                       <button
-                        className="w-full flex items-center gap-4 px-5 py-2.5 hover:bg-beige/50 transition text-left text-[13px] text-wood/70"
+                        className="w-full flex items-center gap-4 px-5 py-2.5 hover:bg-gray-50 transition text-left text-sm text-gray-700 font-medium"
                         onClick={() => {
                           setQuery(s);
                           navigate(`/products?q=${encodeURIComponent(s)}`);
                           setShowSuggestions(false);
                         }}
                       >
-                        <svg className="w-3.5 h-3.5 text-wood/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         {s}
@@ -117,7 +120,7 @@ export default function SearchBar({ minimal = false }) {
               {suggestions.map((p) => (
                 <li key={p.id}>
                   <button
-                    className="w-full flex items-center gap-4 px-5 py-3 hover:bg-beige/50 transition text-left"
+                    className="w-full flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition text-left border-b border-gray-50 last:border-0"
                     onClick={() => {
                       saveSearch(p.name);
                       navigate(`/product/${p.id}`);
@@ -126,24 +129,24 @@ export default function SearchBar({ minimal = false }) {
                     }}
                   >
                     {p.images?.[0] ? (
-                      <img src={p.images[0]} alt="" className="w-12 h-12 object-cover rounded-xl shadow-sm" />
+                      <img src={p.images[0]} alt="" className="w-10 h-10 object-cover rounded-lg" />
                     ) : (
-                      <div className="w-12 h-12 bg-beige rounded-xl" />
+                      <div className="w-10 h-10 bg-gray-50 rounded-lg" />
                     )}
-                    <div className="flex-1">
-                      <p className="text-[13px] font-bold text-wood truncate">{p.name}</p>
-                      <p className="text-[11px] text-gold font-medium uppercase tracking-wider">{p.category.replace('_', ' ')}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-gray-900 truncate">{p.name}</p>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{p.category?.replace('_', ' ')}</p>
                     </div>
                   </button>
                 </li>
               ))}
               {query.length >= 2 && (
-                <li className="px-5 pt-2 mt-2 border-t border-wood/5">
+                <li className="px-5 pt-2 mt-2 border-t border-gray-50 text-center">
                   <button
-                    className="w-full py-2 text-[11px] text-center text-gold font-bold uppercase tracking-widest hover:text-wood transition"
+                    className="w-full py-2 text-xs text-[#E62E04] font-bold hover:underline"
                     onClick={handleSearch}
                   >
-                    All results for "{query}"
+                    View all results for "{query}"
                   </button>
                 </li>
               )}
