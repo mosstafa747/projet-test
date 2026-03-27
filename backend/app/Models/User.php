@@ -51,9 +51,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(Review::class);
     }
-
-    public function tickets(): HasMany
-    {
-        return $this->hasMany(SupportTicket::class);
-    }
 }

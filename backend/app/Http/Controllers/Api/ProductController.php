@@ -27,7 +27,7 @@ class ProductController extends Controller
         $cacheKey = 'products_index_' . md5(json_encode($request->all()));
         
         $products = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function() use ($request) {
-            $query = Product::with('variants');
+            $query = Product::query();
 
             if ($request->has('q') && $request->q) {
                 $q = $request->q;
@@ -98,7 +98,7 @@ class ProductController extends Controller
     {
         $cacheKey = 'product_show_' . $product->id;
         $data = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function() use ($product) {
-            return $product->load(['approvedReviews.user:id,name', 'variants']);
+            return $product->load('approvedReviews.user:id,name');
         });
         return response()->json($data);
     }
@@ -107,7 +107,7 @@ class ProductController extends Controller
     {
         $cacheKey = 'products_by_category_' . $category;
         $products = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function() use ($category) {
-            return Product::with('variants')->where('category', $category)->orderByDesc('sales_count')->limit(8)->get();
+            return Product::where('category', $category)->orderByDesc('sales_count')->limit(8)->get();
         });
         return response()->json($products);
     }

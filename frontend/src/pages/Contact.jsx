@@ -163,18 +163,18 @@ export default function Contact() {
 
       {/* Map Section - Immersive */}
       <section className="h-[60vh] relative grayscale hover:grayscale-0 transition-all duration-1000">
-  <iframe
-    title="Map"
-    src="https://www.google.com/maps?q=31.6295,-7.989755&z=15&output=embed"
-    width="100%"
-    height="100%"
-    style={{ border: 0 }}
-    allowFullScreen
-    loading="lazy"
-    referrerPolicy="no-referrer-when-downgrade"
-  />
-  <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_100px_rgba(74,52,40,0.2)]" />
-</section>
+        <iframe
+          title="Map"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3398.735816992!2d-7.989755!3d31.6295!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzHCsDM3JzQ2LjIiTiA3wrA1OSJzMjMuMSJF!5e0!3m2!1sen!2s!4v1635000000000!5m2!1sen!2s"
+          width="100%"
+          height="100%"
+          style={{ border: 0 }}
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+        <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_100px_rgba(74,52,40,0.2)]" />
+      </section>
     </div>
   );
 }

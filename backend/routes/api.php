@@ -56,13 +56,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
 // Admin
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
-    Route::get('stats', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'index']);
-    Route::get('settings', [\App\Http\Controllers\Api\Admin\SettingController::class, 'index']);
-    Route::put('settings', [\App\Http\Controllers\Api\Admin\SettingController::class, 'update']);
-    Route::get('products/alerts', [\App\Http\Controllers\Api\Admin\ProductController::class, 'alerts']);
     Route::apiResource('products', \App\Http\Controllers\Api\Admin\ProductController::class);
-    Route::post('products/import', [\App\Http\Controllers\Api\Admin\ProductController::class, 'import']);
-    Route::get('orders/export', [\App\Http\Controllers\Api\Admin\OrderController::class, 'export']);
     Route::get('orders', [\App\Http\Controllers\Api\Admin\OrderController::class, 'index']);
     Route::put('orders/{order}', [\App\Http\Controllers\Api\Admin\OrderController::class, 'update']);
     Route::post('orders/{order}/confirm', [\App\Http\Controllers\Api\Admin\OrderController::class, 'confirm']);
@@ -71,8 +65,6 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('custom-requests', [\App\Http\Controllers\Api\Admin\CustomRequestController::class, 'index']);
     Route::put('custom-requests/{customRequest}', [\App\Http\Controllers\Api\Admin\CustomRequestController::class, 'update']);
     Route::get('users', [\App\Http\Controllers\Api\Admin\UserController::class, 'index']);
-    Route::get('users/{user}', [\App\Http\Controllers\Api\Admin\UserController::class, 'show']);
-    Route::put('users/{user}/toggle-admin', [\App\Http\Controllers\Api\Admin\UserController::class, 'toggleAdmin']);
     Route::get('reviews', [\App\Http\Controllers\Api\Admin\ReviewController::class, 'index']);
     Route::put('reviews/{review}', [\App\Http\Controllers\Api\Admin\ReviewController::class, 'update']);
     Route::delete('reviews/{review}', [\App\Http\Controllers\Api\Admin\ReviewController::class, 'destroy']);

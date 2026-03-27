@@ -6,7 +6,7 @@ import { useCurrencyStore } from '../store/useCurrencyStore';
 export default function Cart() {
   const { items, updateQuantity, removeItem } = useCartStore();
   const { formatPrice, currency } = useCurrencyStore();
-  const subtotal = items.reduce((s, i) => s + (i.variant ? Number(i.variant.price_modifier) + Number(i.product.price) : Number(i.product.price)) * i.quantity, 0);
+  const subtotal = items.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0);
 
   if (items.length === 0) {
     return (
@@ -52,7 +52,7 @@ export default function Cart() {
             <AnimatePresence mode="popLayout">
               {items.map((item) => (
                 <motion.div
-                  key={item.cartItemId}
+                  key={item.productId}
                   layout
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -73,27 +73,24 @@ export default function Cart() {
                         {item.product.name}
                       </Link>
                       <p className="text-wood/40 text-[11px] uppercase tracking-widest font-bold mt-1">Ref: #B-{item.productId.toString().padStart(4, '0')}</p>
-                      {item.variant && (
-                        <p className="text-gold font-bold text-xs uppercase tracking-widest mt-2">{item.variant.name}</p>
-                      )}
                     </div>
                     
-                    <p className="text-gold font-bold text-xl">{formatPrice(item.variant ? Number(item.product.price) + Number(item.variant.price_modifier) : Number(item.product.price))}</p>
+                    <p className="text-gold font-bold text-xl">{formatPrice(item.product.price)}</p>
                     
                     <div className="flex items-center justify-center md:justify-start gap-6">
                       <div className="flex items-center bg-white/40 rounded-full px-4 py-2 border border-white/60">
                          <button
-                           onClick={() => updateQuantity(item.cartItemId, Math.max(1, item.quantity - 1))}
+                           onClick={() => updateQuantity(item.productId, Math.max(1, item.quantity - 1))}
                            className="w-8 h-8 flex items-center justify-center text-wood/60 hover:text-wood transition font-bold"
                          >−</button>
                          <span className="w-12 text-center text-wood font-bold text-sm">{item.quantity}</span>
                          <button
-                           onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
+                           onClick={() => updateQuantity(item.productId, item.quantity + 1)}
                            className="w-8 h-8 flex items-center justify-center text-wood/60 hover:text-wood transition font-bold"
                          >+</button>
                       </div>
                       <button
-                        onClick={() => removeItem(item.cartItemId)}
+                        onClick={() => removeItem(item.productId)}
                         className="text-[10px] uppercase tracking-widest font-bold text-red-400 hover:text-red-500 transition underline underline-offset-4"
                       >Remove</button>
                     </div>
@@ -102,7 +99,7 @@ export default function Cart() {
                   <div className="hidden md:block text-right space-y-2 pr-4">
                     <p className="text-wood/30 text-[10px] uppercase font-bold tracking-widest">Total</p>
                     <p className="text-wood font-bold text-2xl font-heading">
-                      {formatPrice((item.variant ? Number(item.product.price) + Number(item.variant.price_modifier) : Number(item.product.price)) * item.quantity)}
+                      {formatPrice(Number(item.product.price) * item.quantity)}
                     </p>
                   </div>
                 </motion.div>
