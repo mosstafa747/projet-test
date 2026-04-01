@@ -13,8 +13,7 @@ export default function AdminProductForm() {
     if (user && !user.is_admin) {
       navigate('/login');
     } else if (!user) {
-        // Optional: wait a bit or check token if needed, 
-        // but Admin.jsx doesn't do it either.
+        // Optional: wait a bit or check token if needed
     }
   }, [user, navigate]);
 
@@ -34,7 +33,6 @@ export default function AdminProductForm() {
     dimensions: '',
     images: [],
     sku: '',
-    variants: [],
   });
 
   useEffect(() => {
@@ -53,50 +51,11 @@ export default function AdminProductForm() {
           dimensions: p.dimensions || '',
           images: p.images || [],
           sku: p.sku || '',
-          variants: p.variants || [],
         });
         setLoading(false);
       });
     }
   }, [id, isEdit]);
-
-  const handleAddVariant = () => {
-    setForm({
-      ...form, 
-      variants: [...form.variants, { name: '', options: [{name: '', value: ''}], price_modifier: 0, stock: 0, sku: '' }]
-    });
-  };
-
-  const updateVariant = (index, field, value) => {
-    const newVariants = [...form.variants];
-    newVariants[index][field] = value;
-    setForm({ ...form, variants: newVariants });
-  };
-
-  const removeVariant = (index) => {
-    const newVariants = [...form.variants];
-    newVariants.splice(index, 1);
-    setForm({ ...form, variants: newVariants });
-  };
-
-  const addOption = (vIdx) => {
-    const newVariants = [...form.variants];
-    const options = Array.isArray(newVariants[vIdx].options) ? [...newVariants[vIdx].options] : [];
-    newVariants[vIdx].options = [...options, { name: '', value: '' }];
-    setForm({ ...form, variants: newVariants });
-  };
-
-  const removeOption = (vIdx, oIdx) => {
-    const newVariants = [...form.variants];
-    newVariants[vIdx].options.splice(oIdx, 1);
-    setForm({ ...form, variants: newVariants });
-  };
-
-  const updateOption = (vIdx, oIdx, field, value) => {
-    const newVariants = [...form.variants];
-    newVariants[vIdx].options[oIdx][field] = value;
-    setForm({ ...form, variants: newVariants });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -228,73 +187,60 @@ export default function AdminProductForm() {
                 </div>
              </div>
 
-              <div className="space-y-8">
-                 <div className="flex justify-between items-center border-b border-gray-50 pb-4">
-                    <h3 className="text-xs uppercase font-bold tracking-widest text-gray-400">Product Variations</h3>
-                    <button type="button" onClick={handleAddVariant} className="text-sm font-bold text-yellow-600 hover:text-yellow-700 transition-colors flex items-center gap-2">
-                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                       Add Variant
-                    </button>
-                 </div>
-                 
-                 <div className="space-y-6">
-                    {form.variants.map((v, idx) => (
-                       <div key={idx} className="bg-gray-50 p-8 rounded-3xl border border-gray-100 space-y-6 relative group">
-                          <button type="button" onClick={() => removeVariant(idx)} className="absolute top-6 right-6 text-gray-400 hover:text-red-500 transition-colors">
-                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                          </button>
-                          
-                          <div className="grid md:grid-cols-2 gap-8 pr-10">
-                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 ml-1">Variant Name</label>
-                                <input type="text" placeholder="e.g. Brown Leather" className="w-full bg-white border-none rounded-2xl px-5 py-4 text-gray-900 text-sm focus:ring-2 focus:ring-yellow-400 transition-all outline-none" value={v.name} onChange={e => updateVariant(idx, 'name', e.target.value)} required />
-                             </div>
-                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 ml-1">Variant SKU</label>
-                                <input type="text" placeholder="e.g. BELDI-CRED-001-BR" className="w-full bg-white border-none rounded-2xl px-5 py-4 text-gray-900 text-sm font-mono focus:ring-2 focus:ring-yellow-400 transition-all outline-none" value={v.sku} onChange={e => updateVariant(idx, 'sku', e.target.value.toUpperCase())} />
-                             </div>
-                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 ml-1">Price Adjustment (MAD)</label>
-                                <input type="number" placeholder="0" className="w-full bg-white border-none rounded-2xl px-5 py-4 text-gray-900 text-sm focus:ring-2 focus:ring-yellow-400 transition-all outline-none" value={v.price_modifier} onChange={e => updateVariant(idx, 'price_modifier', e.target.value)} />
-                                <p className="text-[10px] text-gray-400 font-medium ml-1">Added to base price</p>
-                             </div>
-                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 ml-1">Variant Stock</label>
-                                <input type="number" min="0" placeholder="0" className="w-full bg-white border-none rounded-2xl px-5 py-4 text-gray-900 text-sm focus:ring-2 focus:ring-yellow-400 transition-all outline-none" value={v.stock} onChange={e => updateVariant(idx, 'stock', e.target.value)} />
-                             </div>
-                          </div>
-                          
-                           <div className="space-y-4 pt-6 border-t border-gray-200/50">
-                              <div className="flex justify-between items-center mb-1">
-                                 <label className="text-xs font-bold text-gray-700 ml-1">Options (Attributes)</label>
-                                 <button type="button" onClick={() => addOption(idx)} className="text-[10px] font-bold text-yellow-600 hover:text-yellow-700 uppercase tracking-wider">Add Attribute</button>
-                              </div>
-                              <div className="space-y-3">
-                                 {Array.isArray(v.options) ? v.options.map((opt, oIdx) => (
-                                    <div key={oIdx} className="flex gap-3 items-center">
-                                       <input type="text" placeholder="Attribute (e.g. Color)" className="flex-1 bg-white border-none rounded-xl px-4 py-3 text-gray-900 text-xs focus:ring-2 focus:ring-yellow-400 transition-all outline-none" value={opt.name} onChange={e => updateOption(idx, oIdx, 'name', e.target.value)} />
-                                       <input type="text" placeholder="Value (e.g. Oak)" className="flex-1 bg-white border-none rounded-xl px-4 py-3 text-gray-900 text-xs focus:ring-2 focus:ring-yellow-400 transition-all outline-none" value={opt.value} onChange={e => updateOption(idx, oIdx, 'value', e.target.value)} />
-                                       <button type="button" onClick={() => removeOption(idx, oIdx)} className="text-gray-300 hover:text-red-500 transition-colors">
-                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                       </button>
-                                    </div>
-                                 )) : (
-                                    <p className="text-[10px] text-gray-400 italic ml-1">No attributes defined. Click "Add Attribute" to specify variations.</p>
-                                 )}
-                              </div>
-                           </div>
-                       </div>
-                    ))}
-                    {form.variants.length === 0 && (
-                       <div className="text-center py-10 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
-                          <p className="text-sm font-medium text-gray-400">No variants defined for this piece yet.</p>
-                       </div>
-                    )}
-                 </div>
+              <div className="space-y-8 mb-12">
+                <h3 className="text-xs uppercase font-bold tracking-widest text-gray-400 border-b border-gray-50 pb-4">Product Imagery</h3>
+                <div className="grid md:grid-cols-2 gap-8">
+                   <div className="space-y-4">
+                      <label htmlFor="product-images" className="flex flex-col items-center justify-center w-full h-40 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 cursor-pointer hover:bg-yellow-50 hover:border-yellow-200 transition-all">
+                         <div className="text-center">
+                            <svg className="w-8 h-8 text-yellow-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                            <p className="text-xs font-black text-gray-900">Upload Masterpieces</p>
+                         </div>
+                         <input type="file" multiple id="product-images" className="hidden" accept="image/*" onChange={async (e) => {
+                            const files = Array.from(e.target.files);
+                            if (files.length === 0) return;
+                            
+                            const newImages = await Promise.all(
+                              files.map(file => new Promise(resolve => {
+                                const reader = new FileReader();
+                                reader.onload = () => resolve(reader.result);
+                                reader.readAsDataURL(file);
+                              }))
+                            );
+                            
+                            setForm(prev => ({ ...prev, images: [...prev.images, ...newImages] }));
+                            e.target.value = ''; // Reset input to allow same file selection
+                         }} />
+                      </label>
+                   </div>
+                   <div className="grid grid-cols-4 gap-2 h-40 overflow-y-auto">
+                      {form.images.map((img, idx) => (
+                         <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group border border-gray-100 shadow-sm">
+                            <img src={img} alt="" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                               <button type="button" onClick={() => setForm(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }))} className="text-white p-1 hover:text-red-400 transition-colors">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                               </button>
+                            </div>
+                         </div>
+                      ))}
+                      {form.images.length === 0 && <div className="col-span-4 flex items-center justify-center bg-gray-50 rounded-xl text-[10px] font-bold text-gray-400 uppercase">Gallery Empty</div>}
+                   </div>
+                </div>
               </div>
 
-             <div className="space-y-8">
+               <div className="space-y-8">
                 <h3 className="text-xs uppercase font-bold tracking-widest text-gray-400 border-b border-gray-50 pb-4">Detailed Description</h3>
+                <div className="grid md:grid-cols-2 gap-8">
+                   <div className="space-y-2">
+                       <label className="text-xs font-bold text-gray-700 ml-1">Materials</label>
+                       <input type="text" className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-yellow-400 transition-all outline-none" placeholder="e.g. Cedar Wood" value={form.materials} onChange={e => setForm({ ...form, materials: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-xs font-bold text-gray-700 ml-1">Dimensions</label>
+                       <input type="text" className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-yellow-400 transition-all outline-none" placeholder="e.g. 100x50x80" value={form.dimensions} onChange={e => setForm({ ...form, dimensions: e.target.value })} />
+                    </div>
+                </div>
                 <div className="space-y-2">
                    <label className="text-xs font-bold text-gray-700 ml-1">Narrative</label>
                    <textarea

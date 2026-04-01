@@ -16,6 +16,8 @@ class Order extends Model
         'shipping_name', 'shipping_phone', 'shipping_address', 'shipping_city', 'shipping_country',
         'delivery_method', 'payment_method', 'status', 'coupon_code', 'discount_amount',
         'refund_amount', 'refund_reason', 'refund_status', 'confirmed_at',
+        'driver_id', 'payment_status', 'shipped_at', 'delivered_at', 'cancelled_at', 'completed_at', 'failed_reason', 'driver_comment',
+        'is_cash_settled'
     ];
 
     protected function casts(): array
@@ -27,6 +29,7 @@ class Order extends Model
             'discount_amount' => 'decimal:2',
             'refund_amount' => 'decimal:2',
             'confirmed_at' => 'datetime',
+            'completed_at' => 'datetime',
         ];
     }
 

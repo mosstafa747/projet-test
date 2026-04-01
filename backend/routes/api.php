@@ -23,6 +23,8 @@ Route::get('/testimonials', fn () => \App\Models\Testimonial::where('featured', 
 
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/auth/password-reset', [AuthController::class, 'passwordReset']);
 Route::post('/custom-requests', [CustomRequestController::class, 'store']);
 
 // Protected
@@ -32,7 +34,6 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::put('/users/password', [AuthController::class, 'updatePassword']);
     Route::delete('/users/account', [AuthController::class, 'deleteAccount']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
-    Route::post('/auth/password-reset', [AuthController::class, 'passwordReset']);
 
     Route::get('/wishlist', [WishlistController::class, 'index']);
     Route::post('/wishlist/{product}', [WishlistController::class, 'toggle']);
@@ -42,6 +43,22 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/orders/{order}', [OrderController::class, 'show']);
     Route::post('/payment/stripe-session', [\App\Http\Controllers\Api\PaymentController::class, 'createSession']);
     Route::post('/payment/success', [\App\Http\Controllers\Api\PaymentController::class, 'handleSuccess']);
+
+    // Dispatching & COD Workflow
+    Route::group(['prefix' => 'admin/dispatch', 'middleware' => 'admin'], function () {
+        Route::post('/orders/{order}/confirm', [\App\Http\Controllers\Api\Admin\OrderController::class, 'confirm']);
+        Route::post('/orders/{order}/assign', [\App\Http\Controllers\Api\Admin\DispatchController::class, 'assignDriver']);
+        Route::post('/orders/{order}/start-delivery', [\App\Http\Controllers\Api\Admin\DispatchController::class, 'startDelivery']);
+        Route::get('/drivers/stats', [\App\Http\Controllers\Api\Admin\DispatchController::class, 'driverStats']);
+        Route::post('/drivers/{user}/settle', [\App\Http\Controllers\Api\Admin\DispatchController::class, 'settle']);
+    });
+
+    // Driver Portal
+    Route::group(['prefix' => 'driver'], function () {
+        Route::get('/orders', [\App\Http\Controllers\Api\Driver\DriverController::class, 'index']);
+        Route::get('/history', [\App\Http\Controllers\Api\Driver\DriverController::class, 'history']);
+        Route::post('/orders/{order}/status', [\App\Http\Controllers\Api\Driver\DriverController::class, 'updateStatus']);
+    });
 
     Route::post('/products/{product}/reviews', [ReviewController::class, 'store']);
 
@@ -56,19 +73,30 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
 // Admin
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    Route::get('stats', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'index']);
+    Route::get('settings', [\App\Http\Controllers\Api\Admin\SettingController::class, 'index']);
+    Route::put('settings', [\App\Http\Controllers\Api\Admin\SettingController::class, 'update']);
+    Route::get('products/alerts', [\App\Http\Controllers\Api\Admin\ProductController::class, 'alerts']);
     Route::apiResource('products', \App\Http\Controllers\Api\Admin\ProductController::class);
+    Route::post('products/import', [\App\Http\Controllers\Api\Admin\ProductController::class, 'import']);
+    Route::get('orders/export', [\App\Http\Controllers\Api\Admin\OrderController::class, 'export']);
     Route::get('orders', [\App\Http\Controllers\Api\Admin\OrderController::class, 'index']);
     Route::put('orders/{order}', [\App\Http\Controllers\Api\Admin\OrderController::class, 'update']);
     Route::post('orders/{order}/confirm', [\App\Http\Controllers\Api\Admin\OrderController::class, 'confirm']);
     Route::post('orders/{order}/cancel', [\App\Http\Controllers\Api\Admin\OrderController::class, 'cancel']);
+    Route::post('orders/{order}/deliver', [\App\Http\Controllers\Api\Admin\OrderController::class, 'deliver']);
+    Route::post('orders/{order}/complete', [\App\Http\Controllers\Api\Admin\OrderController::class, 'complete']);
     Route::post('orders/{order}/refund', [\App\Http\Controllers\Api\Admin\OrderController::class, 'refund']);
     Route::get('custom-requests', [\App\Http\Controllers\Api\Admin\CustomRequestController::class, 'index']);
     Route::put('custom-requests/{customRequest}', [\App\Http\Controllers\Api\Admin\CustomRequestController::class, 'update']);
     Route::get('users', [\App\Http\Controllers\Api\Admin\UserController::class, 'index']);
+    Route::get('users/{user}', [\App\Http\Controllers\Api\Admin\UserController::class, 'show']);
+    Route::put('users/{user}/toggle-admin', [\App\Http\Controllers\Api\Admin\UserController::class, 'toggleAdmin']);
+    Route::put('users/{user}/toggle-driver', [\App\Http\Controllers\Api\Admin\UserController::class, 'toggleDriver']);
     Route::get('reviews', [\App\Http\Controllers\Api\Admin\ReviewController::class, 'index']);
     Route::put('reviews/{review}', [\App\Http\Controllers\Api\Admin\ReviewController::class, 'update']);
     Route::delete('reviews/{review}', [\App\Http\Controllers\Api\Admin\ReviewController::class, 'destroy']);
-    
+
     Route::post('categories', [\App\Http\Controllers\CategoryController::class, 'store']);
     Route::put('categories/{category}', [\App\Http\Controllers\CategoryController::class, 'update']);
     Route::delete('categories/{category}', [\App\Http\Controllers\CategoryController::class, 'destroy']);

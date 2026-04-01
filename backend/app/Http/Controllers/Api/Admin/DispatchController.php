@@ -40,7 +40,21 @@ class DispatchController extends Controller
             'driver_id' => $driver->id,
         ]);
 
-        return response()->json($order);
+        return response()->json($order->load('user', 'items.product'));
+    }
+
+    public function startDelivery(Order $order): JsonResponse
+    {
+        if ($order->status !== 'assigned') {
+            return response()->json(['message' => 'Order must be assigned to start delivery.'], 422);
+        }
+
+        $order->update([
+            'status' => 'shipped',
+            'shipped_at' => now(),
+        ]);
+
+        return response()->json($order->load('user', 'items.product'));
     }
 
     public function driverStats(): JsonResponse

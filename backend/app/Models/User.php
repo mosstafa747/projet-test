@@ -20,7 +20,10 @@ class User extends Authenticatable
         'email',
         'password',
         'phone',
+        'address',
+        'city',
         'is_admin',
+        'is_driver',
     ];
 
     protected $hidden = [
@@ -34,6 +37,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'is_driver' => 'boolean',
         ];
     }
 

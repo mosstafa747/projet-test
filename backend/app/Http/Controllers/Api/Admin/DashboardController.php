@@ -13,8 +13,8 @@ class DashboardController extends Controller
 {
     public function index(): JsonResponse
     {
-        $totalSales = Order::where('status', 'delivered')->sum('total_price');
-        $totalOrders = Order::where('status', 'delivered')->count();
+        $totalSales = Order::where('status', 'completed')->sum('total_price');
+        $totalOrders = Order::where('status', 'completed')->count();
         $totalCustomers = User::where('is_admin', false)->count();
         $avgOrderValue = $totalOrders > 0 ? $totalSales / $totalOrders : 0;
 
@@ -34,7 +34,7 @@ class DashboardController extends Controller
             $history->put($date, ['date' => $date, 'total' => 0]);
         }
 
-        $salesData = Order::where('status', 'delivered')
+        $salesData = Order::where('status', 'completed')
             ->where('created_at', '>=', now()->subDays(7)->startOfDay())
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(total_price) as total'))
             ->groupBy('date')

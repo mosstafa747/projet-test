@@ -281,3 +281,6 @@ Encryption methods: bcrypt, AES encryption, TLS (HTTPS)
 ## 106. Compliance & Legal
 E-commerce sites must comply with international standards.
 Important regulation: GDPR (Data protection, User consent, Right to data deletion)
+
+## 107. UML Diagrams
+- [Use Case Diagram](file:///c:/Users/mosst/OneDrive/Desktop/projet_test/use_case_diagram.md)

@@ -4,311 +4,259 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/useAuthStore';
 import api from '../lib/api';
 
+const inputClass = "w-full bg-gray-50 border-2 border-gray-50 rounded-2xl px-5 py-4 font-bold text-gray-900 focus:bg-white focus:border-[#E62E04] transition-all outline-none placeholder:text-gray-300";
+const labelClass = "text-[11px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-2 block";
+
 export default function Profile() {
-  const { user, fetchProfile, updateProfile, deleteAccount, logout } = useAuthStore();
+  const { user, fetchProfile, updateProfile, logout } = useAuthStore();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
-  
-  const [profileForm, setProfileForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-  });
 
-  const [passwordForm, setPasswordForm] = useState({
-    current_password: '',
-    password: '',
-    password_confirmation: '',
+  const [profileForm, setProfileForm] = useState({ 
+    name: '', 
+    email: '', 
+    phone: '',
+    address: '',
+    city: ''
+  });
+  const [passwordForm, setPasswordForm] = useState({ 
+    current_password: '', 
+    password: '', 
+    password_confirmation: '' 
   });
 
   useEffect(() => {
     fetchProfile().then(u => {
-      if (u) {
-        setProfileForm({
-          name: u.name,
-          email: u.email,
-          phone: u.phone || '',
-        });
-      }
+      if (u) setProfileForm({ 
+        name: u.name, 
+        email: u.email, 
+        phone: u.phone || '',
+        address: u.address || '',
+        city: u.city || ''
+      });
     });
   }, [fetchProfile]);
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setSuccess('');
+    setLoading(true); setSuccess('');
     try {
       await updateProfile(profileForm);
-      setSuccess('Profile successfully preserved.');
-      setTimeout(() => setSuccess(''), 5000);
+      setSuccess('Profile information updated successfully.');
+      setTimeout(() => setSuccess(''), 4000);
     } catch (err) {
       alert(err.response?.data?.message || 'Update failed');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleUpdatePassword = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setSuccess('');
+    setLoading(true); setSuccess('');
     try {
       await api.put('/users/password', passwordForm);
-      setSuccess('Security credentials updated.');
+      setSuccess('Your password has been changed.');
       setPasswordForm({ current_password: '', password: '', password_confirmation: '' });
-      setTimeout(() => setSuccess(''), 5000);
+      setTimeout(() => setSuccess(''), 4000);
     } catch (err) {
       alert(err.response?.data?.message || 'Password update failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    if (!window.confirm('This will permanently remove your narrative from our history. Are you sure?')) return;
-    try {
-      await deleteAccount();
-      navigate('/');
-    } catch (err) {
-      alert('Failed to delete account');
-    }
+    } finally { setLoading(false); }
   };
 
   if (!user) return null;
 
+  const initials = user.name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
   return (
-    <div className="bg-cream min-h-screen pb-40">
-      {/* Breadcrumbs */}
-      <nav className="max-w-7xl mx-auto px-6 pt-12 flex gap-2 text-[10px] uppercase tracking-widest text-wood/40 font-bold mb-20">
-        <Link to="/" className="hover:text-gold transition">Home</Link>
-        <span>/</span>
-        <span className="text-gold">Private Atelier</span>
-      </nav>
-
-      <div className="max-w-7xl mx-auto px-6">
-        <header className="mb-20 space-y-4">
-           <span className="text-gold font-bold uppercase tracking-[0.3em] text-[11px] block">Your Legacy</span>
-           <h1 className="font-heading text-5xl md:text-6xl text-wood font-bold">The Private Atelier</h1>
-        </header>
-
-        <div className="grid lg:grid-cols-4 gap-16 items-start">
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-10">
-            <div className="glass-panel p-10 rounded-[3rem] shadow-premium text-center border-white/60">
-               <div className="w-24 h-24 bg-beige rounded-full flex items-center justify-center mx-auto mb-6 text-wood/10 ring-4 ring-white shadow-inner">
-                  <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-               </div>
-               <h2 className="font-heading text-2xl text-wood font-bold truncate">{user.name}</h2>
-               <div className="mt-4 inline-block px-4 py-1.5 bg-gold/10 rounded-full">
-                  <span className="text-[10px] text-gold uppercase tracking-widest font-bold">Patron since {new Date(user.created_at || Date.now()).getFullYear()}</span>
-               </div>
+    <div className="bg-white min-h-screen">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8 border-b border-gray-100">
+         <div className="flex items-center gap-6">
+            <div className="w-20 h-20 bg-gray-900 rounded-[2rem] flex items-center justify-center text-white text-2xl font-black shadow-xl">
+               {initials}
             </div>
-
-            <div className="space-y-3">
-              {[
-                { id: 'overview', label: 'Artisan Portfolio', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
-                { id: 'security', label: 'Vault Security', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-4 px-8 py-5 rounded-[2rem] transition-all duration-500 font-bold uppercase tracking-widest text-[11px] ${activeTab === tab.id ? 'bg-wood text-cream shadow-xl translate-x-4' : 'text-wood/40 hover:text-wood hover:bg-white/40'}`}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={tab.icon} />
-                  </svg>
-                  {tab.label}
-                </button>
-              ))}
-              
-              <Link
-                to="/orders"
-                className="w-full flex items-center gap-4 px-8 py-5 rounded-[2rem] text-wood/40 hover:text-wood hover:bg-white/40 font-bold uppercase tracking-widest text-[11px] transition-all"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-                Orders Gallery
-              </Link>
-
-              <button
-                onClick={() => { logout(); navigate('/'); }}
-                className="w-full flex items-center gap-4 px-8 py-5 rounded-[2rem] text-red-400 hover:bg-red-50 font-bold uppercase tracking-widest text-[11px] transition-all mt-10"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                End Session
-              </button>
+            <div>
+               <h1 className="text-4xl font-black text-gray-900 tracking-tighter">{user.name}</h1>
+               <p className="text-gray-400 font-bold tracking-tight">{user.email}</p>
             </div>
+         </div>
+         <div className="flex gap-4">
+            <Link to="/orders" className="bg-gray-50 text-gray-900 px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-gray-100 transition-all border border-gray-100">My Orders</Link>
+            <button onClick={() => { logout(); navigate('/'); }} className="bg-red-50 text-[#E62E04] px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-red-100 transition-all">Sign Out</button>
+         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid lg:grid-cols-12 gap-16 items-start">
+          
+          {/* Sidebar Tabs */}
+          <div className="lg:col-span-3 space-y-2">
+             <button 
+                onClick={() => setActiveTab('profile')}
+                className={`w-full text-left px-6 py-4 rounded-2xl font-black uppercase text-[11px] tracking-widest transition-all ${activeTab === 'profile' ? 'bg-gray-900 text-white shadow-xl rotate-[-1deg]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'}`}
+             >
+                Profile & Shipping
+             </button>
+             <button 
+                onClick={() => setActiveTab('security')}
+                className={`w-full text-left px-6 py-4 rounded-2xl font-black uppercase text-[11px] tracking-widest transition-all ${activeTab === 'security' ? 'bg-gray-900 text-white shadow-xl rotate-[1deg]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'}`}
+             >
+                Security Settings
+             </button>
           </div>
 
-          {/* Content */}
-          <div className="lg:col-span-3">
+          {/* Form Area */}
+          <div className="lg:col-span-9">
             <AnimatePresence mode="wait">
-              {activeTab === 'overview' && (
+              {activeTab === 'profile' && (
                 <motion.div
-                  key="overview"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
+                  key="profile"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
                   className="space-y-12"
                 >
-                  <div className="glass-panel p-12 md:p-16 rounded-[4rem] shadow-premium border-white/60 space-y-12">
-                    <header className="space-y-2">
-                       <h2 className="font-heading text-4xl text-wood font-bold">Portfolio Details</h2>
-                       <p className="text-wood/40 italic font-serif">A record of your journey with Beldi Concept.</p>
-                    </header>
+                  <section className="space-y-8">
+                     <div className="flex justify-between items-end">
+                        <h2 className="text-3xl font-black text-gray-900 tracking-tight">Personal & Shipping</h2>
+                        {success && (
+                           <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[#00A854] font-black text-xs uppercase tracking-widest px-4 py-2 bg-emerald-50 rounded-xl">✓ {success}</motion.span>
+                        )}
+                     </div>
 
-                    {success && (
-                      <motion.div 
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="p-6 bg-olive/10 text-olive text-[11px] font-bold uppercase tracking-widest rounded-3xl border border-olive/20 text-center"
-                      >{success}</motion.div>
-                    )}
-
-                    <form onSubmit={handleUpdateProfile} className="space-y-10">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                        <div className="space-y-2">
-                          <label className="text-[10px] uppercase tracking-widest font-bold text-wood/30 ml-4">Full Identity</label>
-                          <input
-                            type="text"
-                            required
-                            className="premium-input w-full"
-                            value={profileForm.name}
-                            onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
-                          />
+                     <form onSubmit={handleUpdateProfile} className="space-y-8">
+                        <div className="grid sm:grid-cols-2 gap-8">
+                           <div>
+                              <label className={labelClass}>Full Name</label>
+                              <input 
+                                 type="text" 
+                                 className={inputClass}
+                                 value={profileForm.name}
+                                 onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
+                                 placeholder="Hassan Benali"
+                                 required
+                              />
+                           </div>
+                           <div>
+                              <label className={labelClass}>Email Address</label>
+                              <input 
+                                 type="email" 
+                                 className={inputClass}
+                                 value={profileForm.email}
+                                 onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
+                                 placeholder="hassan@example.com"
+                                 required
+                              />
+                           </div>
+                           <div>
+                              <label className={labelClass}>Phone Number</label>
+                              <input 
+                                 type="tel" 
+                                 className={inputClass}
+                                 value={profileForm.phone}
+                                 onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })}
+                                 placeholder="06 XX XX XX XX"
+                              />
+                           </div>
+                           <div>
+                              <label className={labelClass}>City</label>
+                              <input 
+                                 type="text" 
+                                 className={inputClass}
+                                 value={profileForm.city}
+                                 onChange={e => setProfileForm({ ...profileForm, city: e.target.value })}
+                                 placeholder="Casablanca"
+                              />
+                           </div>
+                           <div className="sm:col-span-2">
+                              <label className={labelClass}>Full Shipping Address</label>
+                              <input 
+                                 type="text" 
+                                 className={inputClass}
+                                 value={profileForm.address}
+                                 onChange={e => setProfileForm({ ...profileForm, address: e.target.value })}
+                                 placeholder="Street name, Apartment number, Landmark"
+                              />
+                           </div>
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] uppercase tracking-widest font-bold text-wood/30 ml-4">Registry Email</label>
-                          <input
-                            type="email"
-                            required
-                            className="premium-input w-full"
-                            value={profileForm.email}
-                            onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
-                          />
-                        </div>
-                      </div>
 
-                      <div className="space-y-2 max-w-md">
-                        <label className="text-[10px] uppercase tracking-widest font-bold text-wood/30 ml-4">Concierge Phone</label>
-                        <input
-                          type="text"
-                          className="premium-input w-full"
-                          value={profileForm.phone}
-                          onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })}
-                        />
-                      </div>
-
-                      <div className="pt-6">
-                        <button
-                          type="submit"
-                          disabled={loading}
-                          className="premium-button bg-wood text-cream shadow-xl hover:shadow-2xl transition-all"
+                        <button 
+                           type="submit" 
+                           disabled={loading}
+                           className="bg-[#E62E04] text-white px-10 py-5 rounded-[2rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-xl shadow-red-100 hover:-translate-y-1 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
                         >
-                          {loading ? 'Preserving…' : 'Preserve Portfolio'}
+                           {loading ? 'Saving Changes...' : 'Save Profile'}
+                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
                         </button>
-                      </div>
-                    </form>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
-                     <Link to="/orders" className="glass-panel p-10 rounded-[3rem] border-white/40 group hover:border-gold/30 transition-all shadow-premium-soft">
-                        <div className="flex items-center justify-between">
-                            <div className="w-12 h-12 bg-gold/10 rounded-2xl flex items-center justify-center text-gold group-hover:bg-gold group-hover:text-cream transition-colors">
-                               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-                            </div>
-                            <svg className="w-6 h-6 text-wood/20 group-hover:text-gold transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                        </div>
-                        <h3 className="font-heading text-2xl text-wood font-bold mt-6">Order Gallery</h3>
-                        <p className="text-wood/40 text-sm italic font-serif mt-2">Browse your past acquisitions.</p>
-                     </Link>
-                     <Link to="/wishlist" className="glass-panel p-10 rounded-[3rem] border-white/40 group hover:border-gold/30 transition-all shadow-premium-soft">
-                        <div className="flex items-center justify-between">
-                            <div className="w-12 h-12 bg-gold/10 rounded-2xl flex items-center justify-center text-gold group-hover:bg-gold group-hover:text-cream transition-colors">
-                               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                            </div>
-                            <svg className="w-6 h-6 text-wood/20 group-hover:text-gold transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                        </div>
-                        <h3 className="font-heading text-2xl text-wood font-bold mt-6">Private Collection</h3>
-                        <p className="text-wood/40 text-sm italic font-serif mt-2">Saved pieces awaiting a home.</p>
-                     </Link>
-                  </div>
+                     </form>
+                  </section>
                 </motion.div>
               )}
 
               {activeTab === 'security' && (
                 <motion.div
                   key="security"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
                   className="space-y-12"
                 >
-                  <div className="glass-panel p-12 md:p-16 rounded-[4rem] shadow-premium border-white/60 space-y-12">
-                    <header className="space-y-2">
-                       <h2 className="font-heading text-4xl text-wood font-bold">Vault Security</h2>
-                       <p className="text-wood/40 italic font-serif">Manage the keys to your private portfolio.</p>
-                    </header>
+                  <section className="space-y-8">
+                     <div className="flex justify-between items-end">
+                        <h2 className="text-3xl font-black text-gray-900 tracking-tight">Account Security</h2>
+                        {success && (
+                           <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[#00A854] font-black text-xs uppercase tracking-widest px-4 py-2 bg-emerald-50 rounded-xl">✓ {success}</motion.span>
+                        )}
+                     </div>
 
-                    <form onSubmit={handleUpdatePassword} className="space-y-10 max-w-md">
-                      <div className="space-y-6">
-                        <div className="space-y-2">
-                          <label className="text-[10px] uppercase tracking-widest font-bold text-wood/30 ml-4">Current Registry Key</label>
-                          <input
-                            type="password"
-                            required
-                            className="premium-input w-full"
-                            value={passwordForm.current_password}
-                            onChange={e => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
-                          />
+                     <form onSubmit={handleUpdatePassword} className="space-y-8 max-w-xl">
+                        <div className="space-y-6">
+                           <div>
+                              <label className={labelClass}>Current Password</label>
+                              <input 
+                                 type="password" 
+                                 className={inputClass}
+                                 value={passwordForm.current_password}
+                                 onChange={e => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
+                                 placeholder="••••••••"
+                                 required
+                              />
+                           </div>
+                           <div>
+                              <label className={labelClass}>New Password</label>
+                              <input 
+                                 type="password" 
+                                 className={inputClass}
+                                 value={passwordForm.password}
+                                 onChange={e => setPasswordForm({ ...passwordForm, password: e.target.value })}
+                                 placeholder="••••••••"
+                                 required
+                              />
+                           </div>
+                           <div>
+                              <label className={labelClass}>Confirm New Password</label>
+                              <input 
+                                 type="password" 
+                                 className={inputClass}
+                                 value={passwordForm.password_confirmation}
+                                 onChange={e => setPasswordForm({ ...passwordForm, password_confirmation: e.target.value })}
+                                 placeholder="••••••••"
+                                 required
+                              />
+                           </div>
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] uppercase tracking-widest font-bold text-wood/30 ml-4">New Registry Key</label>
-                          <input
-                            type="password"
-                            required
-                            className="premium-input w-full"
-                            value={passwordForm.password}
-                            onChange={e => setPasswordForm({ ...passwordForm, password: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] uppercase tracking-widest font-bold text-wood/30 ml-4">Confirm New Key</label>
-                          <input
-                            type="password"
-                            required
-                            className="premium-input w-full"
-                            value={passwordForm.password_confirmation}
-                            onChange={e => setPasswordForm({ ...passwordForm, password_confirmation: e.target.value })}
-                          />
-                        </div>
-                      </div>
 
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="premium-button bg-wood text-cream shadow-xl hover:shadow-2xl transition-all"
-                      >
-                        Change Registry Key
-                      </button>
-                    </form>
-
-                    <div className="pt-20 border-t border-red-50 space-y-8">
-                       <h3 className="text-red-400 font-bold uppercase tracking-[0.2em] text-[11px]">The Final Step</h3>
-                       <div className="bg-red-50/30 p-10 rounded-[3rem] border border-red-100/50 space-y-6">
-                          <p className="text-wood/60 text-sm italic font-serif leading-relaxed">Closing your atelier is a permanent action. All records of your acquisitions and curations will be vanished from our history, in full compliance with global privacy standards.</p>
-                          <button
-                            onClick={handleDeleteAccount}
-                            className="text-[11px] uppercase tracking-widest font-bold text-red-400 hover:text-red-500 transition-all border-b border-red-200 pb-1"
-                          >
-                            Dissolve My Registry
-                          </button>
-                       </div>
-                    </div>
-                  </div>
+                        <button 
+                           type="submit" 
+                           disabled={loading}
+                           className="bg-gray-900 text-white px-10 py-5 rounded-[2rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-xl shadow-gray-100 hover:-translate-y-1 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
+                        >
+                           {loading ? 'Changing Password...' : 'Change Password'}
+                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                        </button>
+                     </form>
+                  </section>
                 </motion.div>
               )}
             </AnimatePresence>

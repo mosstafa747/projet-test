@@ -41,6 +41,11 @@ class CategoryController extends Controller
             'image' => 'nullable|string',
         ]);
 
+        if ($request->has('image') && str_starts_with($request->image, 'data:image')) {
+            $cloudinary = new \App\Services\CloudinaryService();
+            $validated['image'] = $cloudinary->upload($request->image, 'categories');
+        }
+
         $validated['slug'] = Str::slug($validated['name']);
 
         $originalSlug = $validated['slug'];
@@ -64,6 +69,11 @@ class CategoryController extends Controller
             'description' => 'nullable|string',
             'image' => 'nullable|string',
         ]);
+
+        if ($request->has('image') && str_starts_with($request->image, 'data:image')) {
+            $cloudinary = new \App\Services\CloudinaryService();
+            $validated['image'] = $cloudinary->upload($request->image, 'categories');
+        }
 
         if (isset($validated['name'])) {
             $validated['slug'] = Str::slug($validated['name']);

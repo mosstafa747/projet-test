@@ -100,16 +100,66 @@ export default function AdminCategoryForm() {
                    />
                 </div>
 
-                <div className="space-y-2">
-                   <label className="text-xs font-bold text-gray-700 ml-1">Cover Imagery (URL)</label>
-                   <input
-                     type="text"
-                     className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-gray-900 text-sm focus:ring-2 focus:ring-yellow-400 transition-all outline-none"
-                     placeholder="https://images.unsplash.com/..."
-                     value={form.image}
-                     onChange={e => setForm({ ...form, image: e.target.value })}
-                   />
-                   <p className="text-[10px] text-gray-400 font-medium ml-1">Provide a high-quality image URL for the category banner.</p>
+                <div className="space-y-4">
+                   <label className="text-xs font-bold text-gray-700 ml-1">Collection Cover Imagery</label>
+                   
+                   <div className="flex flex-col md:flex-row gap-8 items-start">
+                      {/* Preview Area */}
+                      <div className="w-full md:w-64 h-48 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden relative group">
+                         {form.image ? (
+                            <>
+                               <img src={form.image} alt="Preview" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <button 
+                                    type="button"
+                                    onClick={() => setForm({ ...form, image: '' })}
+                                    className="bg-white/20 hover:bg-white/40 text-white p-2 rounded-full backdrop-blur-md transition-all"
+                                  >
+                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                  </button>
+                               </div>
+                            </>
+                         ) : (
+                            <div className="text-center p-6 text-gray-400">
+                               <svg className="w-10 h-10 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                               <p className="text-[10px] font-bold uppercase tracking-widest">No Image Chosen</p>
+                            </div>
+                         )}
+                      </div>
+
+                      {/* Upload Controls */}
+                      <div className="flex-1 space-y-4">
+                         <div className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              id="category-image"
+                              onChange={(e) => {
+                                 const file = e.target.files[0];
+                                 if (file) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                       setForm({ ...form, image: reader.result });
+                                    };
+                                    reader.readAsDataURL(file);
+                                 }
+                              }}
+                            />
+                            <label 
+                              htmlFor="category-image"
+                              className="inline-flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-2xl font-bold text-sm transition-all cursor-pointer shadow-sm shadow-yellow-200"
+                            >
+                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                               Select Local File
+                            </label>
+                         </div>
+                         <p className="text-[10px] text-gray-400 font-medium leading-relaxed">
+                            Recommended: 1200x800px or larger. <br />
+                            Supports PNG, JPG, or WEBP (Max 5MB).
+                         </p>
+                      </div>
+                   </div>
                 </div>
              </div>
 

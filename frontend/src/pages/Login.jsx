@@ -14,119 +14,137 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    setError(''); setLoading(true);
     try {
       const { data } = await api.post('/auth/login', { email, password });
       setAuth(data.user, data.token);
-      navigate(data.user?.is_admin ? '/admin' : '/profile');
+      if (data.user?.is_admin) navigate('/admin');
+      else if (data.user?.is_driver) navigate('/driver');
+      else navigate('/profile');
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid credentials');
-    } finally {
-      setLoading(false);
-    }
+      setError(err.response?.data?.message || 'Invalid email or password');
+    } finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-cream flex flex-col md:flex-row">
-      {/* Left: Cinematic Image */}
-      <div className="hidden md:block md:w-1/2 relative overflow-hidden">
-        <img 
-          src="https://images.unsplash.com/photo-1534001569309-88006d997204?q=80&w=1974&auto=format&fit=crop" 
-          alt="Moroccan Crafty Workspace" 
-          className="absolute inset-0 w-full h-full object-cover scale-105 hover:scale-100 transition-transform duration-[2000ms]"
+    <div className="min-h-screen bg-white flex flex-col md:flex-row overflow-hidden font-sans">
+      
+      {/* --- Left Design Panel (Abstract Abstract) --- */}
+      <div className="hidden md:flex md:w-1/2 relative bg-gradient-to-br from-[#E62E04] via-[#cc2904] to-[#00A854] overflow-hidden items-center justify-center">
+        {/* Decorative Shapes (Inspired by Freepik) */}
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-black/10 rounded-full blur-3xl" />
+        
+        {/* Floating Abstract Pills */}
+        <motion.div 
+          animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[20%] left-[15%] w-48 h-12 bg-white/20 rounded-full -rotate-45" 
         />
-        <div className="absolute inset-0 bg-wood/40 mix-blend-multiply" />
-        <div className="absolute inset-0 flex flex-col justify-end p-20 space-y-6">
-           <motion.div
-             initial={{ opacity: 0, y: 30 }}
-             animate={{ opacity: 1, y: 0 }}
-             transition={{ delay: 0.5 }}
-           >
-             <span className="text-gold font-bold uppercase tracking-[0.4em] text-xs">Beldi Concept</span>
-             <h2 className="font-heading text-6xl text-cream font-bold mt-4 leading-tight">The Artisan's <br/>Legacy</h2>
-             <p className="text-cream/80 text-xl italic font-serif mt-6 max-w-md">Connect to your personal collection of Moroccan heritage and handcrafted excellence.</p>
-           </motion.div>
+        <motion.div 
+          animate={{ y: [0, 30, 0], rotate: [0, -5, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-[25%] left-[10%] w-64 h-16 bg-white/10 rounded-full rotate-12" 
+        />
+        <motion.div 
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ duration: 10, repeat: Infinity }}
+          className="absolute top-[40%] right-[10%] w-32 h-8 bg-black/10 rounded-full -rotate-12" 
+        />
+
+        <div className="relative z-10 text-white text-center p-12 space-y-4">
+          <motion.h1 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-6xl font-black tracking-tight"
+          >
+            Welcome to website
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-white/80 max-w-md mx-auto leading-relaxed text-lg"
+          >
+            Experience the finest Moroccan artisanal craftsmanship combined with modern simple design.
+          </motion.p>
         </div>
       </div>
 
-      {/* Right: Sophisticated Form */}
-      <div className="flex-1 flex flex-col justify-center px-8 md:px-24 py-20 relative overflow-hidden">
-        {/* Abstract pattern background */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gold/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-wood/5 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/2" />
-
+      {/* --- Right Form Panel (Clean White) --- */}
+      <div className="flex-1 flex items-center justify-center p-8 md:p-20 bg-white">
         <motion.div
-          className="relative max-w-md w-full mx-auto"
+          className="w-full max-w-sm space-y-10"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          <div className="mb-12 space-y-4 text-center md:text-left">
-            <h1 className="font-heading text-5xl text-wood font-bold">Welcome Back</h1>
-            <p className="text-wood/40 font-bold uppercase tracking-widest text-[10px]">Entrance to the Boutique</p>
+          {/* Logo / Header */}
+          <div className="text-center space-y-2">
+            <Link to="/" className="text-2xl font-black text-[#E62E04] tracking-tighter">BELDI EXPRESS</Link>
+            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">USER LOGIN</h2>
           </div>
 
-          <div className="glass-panel p-10 md:p-12 rounded-[3.5rem] shadow-premium border-white/60">
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {error && (
-                <motion.p 
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="text-red-500 text-[11px] font-bold uppercase tracking-widest text-center bg-red-50 py-3 rounded-2xl"
-                >{error}</motion.p>
-              )}
-              
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-wood/30 ml-2">Email Address</label>
-                  <input
-                    type="email"
-                    placeholder="Enter your artisan email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="premium-input w-full"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center px-2">
-                    <label className="text-[10px] uppercase tracking-widest font-bold text-wood/30">Password</label>
-                    <button type="button" className="text-[9px] uppercase tracking-widest font-bold text-gold hover:text-wood transition">Forgot Registry?</button>
-                  </div>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="premium-input w-full"
-                  />
-                </div>
+          {/* Form Content */}
+          <div className="space-y-6">
+            {error && (
+              <div className="p-4 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100 flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm">warning</span>
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-xl">person</span>
+                <input 
+                  type="email" 
+                  placeholder="Email"
+                  className="w-full bg-gray-50 border-none rounded-full py-4 pl-12 pr-6 text-sm outline-none focus:ring-2 focus:ring-[#E62E04]/20 transition-all text-gray-700"
+                  value={email} onChange={(e) => setEmail(e.target.value)} required 
+                />
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="premium-button bg-wood text-cream w-full shadow-xl hover:shadow-2xl transition-all"
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-xl">lock</span>
+                <input 
+                  type="password" 
+                  placeholder="Password"
+                  className="w-full bg-gray-50 border-none rounded-full py-4 pl-12 pr-6 text-sm outline-none focus:ring-2 focus:ring-[#E62E04]/20 transition-all text-gray-700"
+                  value={password} onChange={(e) => setPassword(e.target.value)} required 
+                />
+              </div>
+
+              <div className="flex justify-between items-center px-4">
+                <label className="flex items-center gap-2 text-[11px] font-bold text-gray-400 uppercase cursor-pointer hover:text-gray-600 transition-colors">
+                  <input type="checkbox" className="w-3 h-3 accent-[#00A854]" />
+                  Remember
+                </label>
+                <Link to="/forgot-password" size="sm" className="text-[11px] font-bold text-gray-400 uppercase hover:text-[#E62E04] transition-colors">Forgot password?</Link>
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={loading} 
+                className="w-full bg-gradient-to-r from-[#cc2904] to-[#E62E04] text-white font-black py-4 rounded-full shadow-lg shadow-red-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 uppercase tracking-widest text-xs"
               >
-                {loading ? 'Authenticating…' : 'Sign In'}
+                {loading ? 'Processing...' : 'LOGIN'}
               </button>
             </form>
-          </div>
 
-          <div className="mt-12 text-center space-y-6">
-            <p className="text-wood/40 text-[11px] uppercase tracking-widest font-bold">
-              New to the Atelier? <Link to="/register" className="text-gold hover:text-wood transition border-b-2 border-gold/20 hover:border-gold pb-1 ml-2">Create an Account</Link>
-            </p>
-            
-            <div className="pt-8 border-t border-wood/5 flex flex-wrap justify-center gap-6 opacity-30">
-               <span className="text-[9px] font-bold uppercase tracking-widest">Handcrafted Security</span>
-               <span className="text-[9px] font-bold uppercase tracking-widest">Artisan Privacy</span>
-               <span className="text-[9px] font-bold uppercase tracking-widest">Heritage Trust</span>
+            <div className="text-center pt-4">
+              <p className="text-xs font-bold text-gray-400 uppercase">
+                New here? <Link to="/register" className="text-[#00A854] hover:underline ml-1">Create Account</Link>
+              </p>
             </div>
           </div>
         </motion.div>
       </div>
+
+      {/* Styled By Footer (Optional matching image) */}
+      <div className="fixed bottom-6 w-full text-center md:text-right md:pr-10 z-0 pointer-events-none opacity-40">
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Beldi Express — Simple & Functional</p>
+      </div>
+
     </div>
   );
 }

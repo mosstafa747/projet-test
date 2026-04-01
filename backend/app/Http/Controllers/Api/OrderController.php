@@ -35,8 +35,8 @@ class OrderController extends Controller
             'shipping_address' => ['required', 'string'],
             'shipping_city' => ['required', 'string', 'max:100'],
             'shipping_country' => ['required', 'string', 'max:100'],
-            'delivery_method' => ['required', 'exists:shipping_methods,id'],
-            'payment_method' => ['required', 'in:cash,card,paypal'],
+            'delivery_method' => ['nullable', 'string'],
+            'payment_method' => ['nullable', 'string'],
             'coupon_code' => ['nullable', 'string', 'exists:coupons,code'],
         ]);
 
@@ -59,8 +59,17 @@ class OrderController extends Controller
             $subtotal += $product->price * $item['quantity'];
         }
 
-        $shippingMethod = \App\Models\ShippingMethod::findOrFail($validated['delivery_method']);
-        $shippingCost = $shippingMethod->price;
+        // Simplified delivery: use a default fee of 45 MAD for the "standard" method, 
+        // fallback to database only if a numeric ID is provided.
+        $shippingCost = 45; 
+        $deliveryMethod = $validated['delivery_method'] ?? 'standard';
+
+        if (is_numeric($deliveryMethod)) {
+            $shippingMethod = \App\Models\ShippingMethod::find($deliveryMethod);
+            if ($shippingMethod) {
+                $shippingCost = $shippingMethod->price;
+            }
+        }
 
         $discountAmount = 0;
         $coupon = null;
@@ -119,7 +128,6 @@ class OrderController extends Controller
                 'unit_price' => $oi['unit_price'],
             ]);
             $oi['product']->decrement('stock', $oi['quantity']);
-            $oi['product']->increment('sales_count', $oi['quantity']);
         }
 
         $order->load('items.product');

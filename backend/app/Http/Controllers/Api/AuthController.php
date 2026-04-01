@@ -52,7 +52,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth')->plainTextToken;
 
         return response()->json([
-            'user' => $user->only('id', 'name', 'email', 'phone', 'is_admin'),
+            'user' => $user->only('id', 'name', 'email', 'phone', 'is_admin', 'is_driver'),
             'token' => $token,
             'token_type' => 'Bearer',
         ], 201);
@@ -74,7 +74,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth')->plainTextToken;
 
         return response()->json([
-            'user' => $user->only('id', 'name', 'email', 'phone', 'is_admin'),
+            'user' => $user->only('id', 'name', 'email', 'phone', 'is_admin', 'is_driver'),
             'token' => $token,
             'token_type' => 'Bearer',
         ]);
@@ -89,7 +89,20 @@ class AuthController extends Controller
 
     public function profile(Request $request): JsonResponse
     {
-        return response()->json($request->user()->only('id', 'name', 'email', 'phone', 'is_admin'));
+        return response()->json($request->user()->only('id', 'name', 'email', 'phone', 'address', 'city', 'is_admin', 'is_driver'));
+    }
+
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $status = \Illuminate\Support\Facades\Password::sendResetLink(
+            $request->only('email')
+        );
+
+        return $status === \Illuminate\Support\Facades\Password::RESET_LINK_SENT
+            ? response()->json(['message' => __($status)])
+            : response()->json(['message' => __($status)], 400);
     }
 
     public function passwordReset(Request $request): JsonResponse
@@ -121,13 +134,15 @@ class AuthController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'phone' => ['nullable', 'string', 'max:50'],
+            'address' => ['nullable', 'string', 'max:500'],
+            'city' => ['nullable', 'string', 'max:255'],
         ]);
 
         $user->update($validated);
 
         return response()->json([
             'message' => 'Profile updated successfully',
-            'user' => $user->only('id', 'name', 'email', 'phone', 'is_admin'),
+            'user' => $user->only('id', 'name', 'email', 'phone', 'address', 'city', 'is_admin', 'is_driver'),
         ]);
     }
 

@@ -10,44 +10,37 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { items, clearCart } = useCartStore();
   const user = useAuthStore((s) => s.user);
-  const { formatPrice, currency } = useCurrencyStore();
-  const [step, setStep] = useState(1);
+  const { formatPrice } = useCurrencyStore();
+  
   const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [orderId, setOrderId] = useState(null);
+  const [errors, setErrors] = useState({});
+  
   const [form, setForm] = useState({
     shipping_name: user?.name || '',
-    shipping_phone: '',
-    shipping_address: '',
-    shipping_city: '',
-    shipping_country: '',
-    delivery_method: '',
+    shipping_phone: user?.phone || '',
+    shipping_address: user?.address || '',
+    shipping_city: user?.city || '',
+    shipping_country: 'Morocco',
     payment_method: 'cash',
+    delivery_method: 'standard',
   });
-  const [shippingMethods, setShippingMethods] = useState([]);
+
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
 
-  useEffect(() => {
-    api.get('/shipping-methods').then((r) => {
-      setShippingMethods(r.data);
-      if (r.data.length > 0) {
-        setForm(f => ({ ...f, delivery_method: r.data[0].id.toString() }));
-      }
-    });
-  }, []);
-
-  const selectedMethod = shippingMethods.find(m => m.id.toString() === form.delivery_method);
   const subtotal = items.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0);
-  const shippingCost = appliedCoupon?.type === 'free_shipping' ? 0 : (selectedMethod?.price || 0);
+  const shippingCost = subtotal >= 5000 || appliedCoupon?.type === 'free_shipping' ? 0 : 45;
   const discountAmount = appliedCoupon?.type === 'fixed' ? Number(appliedCoupon.value) : 
                         appliedCoupon?.type === 'percentage' ? (subtotal * Number(appliedCoupon.value) / 100) : 0;
+  const finalTotal = Math.max(0, subtotal + shippingCost - discountAmount);
 
-  const taxRate = form.shipping_country?.toLowerCase() !== 'morocco' ? 0.20 : 0;
-  const taxAmount = subtotal * taxRate;
-  const finalTotal = Math.max(0, subtotal + shippingCost + taxAmount - (appliedCoupon?.type === 'free_shipping' ? 0 : discountAmount));
-
-  const update = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+  const update = (key, value) => {
+    setForm((f) => ({ ...f, [key]: value }));
+    if (errors[key]) setErrors(prev => ({ ...prev, [key]: null }));
+  };
 
   const handleApplyCoupon = async () => {
     if (!couponCode) return;
@@ -63,12 +56,22 @@ export default function Checkout() {
     }
   };
 
+  const validate = () => {
+    const newErrors = {};
+    if (!form.shipping_name.trim()) newErrors.shipping_name = "Full name is required";
+    if (!form.shipping_phone.trim()) newErrors.shipping_phone = "Phone number is required";
+    if (!form.shipping_address.trim()) newErrors.shipping_address = "Address is required";
+    if (!form.shipping_city.trim()) newErrors.shipping_city = "City is required";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async () => {
-    if (step < 4) {
-      setStep((s) => s + 1);
-      window.scrollTo(0, 0);
-      return;
+    if (!validate()) {
+       window.scrollTo({ top: 0, behavior: 'smooth' });
+       return;
     }
+    
     setLoading(true);
     try {
       const payload = {
@@ -86,7 +89,8 @@ export default function Checkout() {
 
       setOrderId(order.order_number || order.id);
       clearCart();
-      setStep(5);
+      setIsSuccess(true);
+      window.scrollTo(0, 0);
     } catch (err) {
       alert(err.response?.data?.message || 'Order failed');
     } finally {
@@ -94,31 +98,31 @@ export default function Checkout() {
     }
   };
 
-  if (items.length === 0 && step < 5) {
+  if (items.length === 0 && !isSuccess) {
     navigate('/cart');
     return null;
   }
 
-  if (step === 5) {
+  if (isSuccess) {
     return (
-      <div className="min-h-screen bg-cream flex items-center justify-center px-6">
+      <div className="min-h-screen bg-white flex items-center justify-center px-6">
         <motion.div 
-          className="glass-panel p-16 rounded-[4rem] text-center space-y-8 max-w-xl shadow-premium"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-md w-full text-center space-y-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
         >
-          <div className="w-20 h-20 bg-gold/10 rounded-full flex items-center justify-center mx-auto text-gold">
-             <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+          <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto text-emerald-600">
+             <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
           </div>
-          <div className="space-y-4">
-            <h1 className="font-heading text-4xl text-wood font-bold">A Masterpiece Awaits</h1>
-            <p className="text-wood/60 leading-relaxed text-lg italic">Order #<span className="text-gold font-bold">{orderId}</span> has been successfully placed. We are preparing the artisans for your collection.</p>
+          <div className="space-y-3">
+            <h1 className="text-4xl font-black text-gray-900 leading-tight">Order Confirmed!</h1>
+            <p className="text-gray-500 font-medium tracking-tight">Your order #<span className="text-emerald-600 font-bold">{orderId}</span> is now being prepared. We'll contact you shortly for delivery.</p>
           </div>
           <button
             onClick={() => navigate('/products')}
-            className="premium-button bg-wood text-cream w-full"
+            className="w-full bg-gray-900 text-white font-black py-5 rounded-2xl hover:bg-gray-800 transition-all shadow-xl shadow-gray-200"
           >
-            Continue Exploring
+            Continue Shopping
           </button>
         </motion.div>
       </div>
@@ -126,283 +130,118 @@ export default function Checkout() {
   }
 
   return (
-    <div className="bg-cream min-h-screen pb-40">
-      {/* Breadcrumbs */}
-      <nav className="max-w-7xl mx-auto px-6 pt-12 flex gap-2 text-[10px] uppercase tracking-widest text-wood/40 font-bold mb-20">
-        <Link to="/" className="hover:text-gold transition">Home</Link>
-        <span>/</span>
-        <Link to="/cart" className="hover:text-gold transition">Boutique Bag</Link>
-        <span>/</span>
-        <span className="text-gold">Checkout Narrative</span>
-      </nav>
+    <div className="bg-white min-h-screen">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto px-6 py-8 flex justify-between items-center border-b border-gray-100">
+         <Link to="/" className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+            <div className="w-8 h-8 bg-[#E62E04] rounded-lg"></div>
+            Beldi Express
+         </Link>
+         <Link to="/cart" className="text-sm font-bold text-gray-500 hover:text-gray-900 flex items-center gap-2 transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            Back to Cart
+         </Link>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-24 items-start">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid lg:grid-cols-12 gap-16 items-start">
           
-          {/* Main Flow */}
-          <div className="space-y-16">
-            <header className="space-y-4">
-              <span className="text-gold font-bold uppercase tracking-[0.3em] text-[11px] block">Step {step} of 4</span>
-              <h1 className="font-heading text-5xl text-wood font-bold">
-                {step === 1 && "Shipping Information"}
-                {step === 2 && "Delivery Method"}
-                {step === 3 && "Payment Selection"}
-                {step === 4 && "Final Review"}
-              </h1>
-              
-              {/* Step indicator */}
-              <div className="flex gap-3 pt-6">
-                {[1, 2, 3, 4].map((s) => (
-                  <div key={s} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${step >= s ? 'bg-gold shadow-[0_0_10px_rgba(198,166,100,0.5)]' : 'bg-wood/10'}`} />
-                ))}
+          {/* Left Column: Form */}
+          <div className="lg:col-span-7 space-y-12">
+            <section className="space-y-6">
+              <h2 className="text-2xl font-black text-gray-900 tracking-tight">Shipping Information</h2>
+              <div className="grid sm:grid-cols-2 gap-6">
+                 <div className="space-y-2">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-gray-400">Full Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Hassan Benali"
+                      value={form.shipping_name}
+                      onChange={(e) => update('shipping_name', e.target.value)}
+                      className={`w-full bg-gray-50 border-2 rounded-2xl px-5 py-4 font-bold text-gray-900 focus:bg-white focus:border-[#E62E04] transition-all outline-none ${errors.shipping_name ? 'border-red-500 bg-red-50/30' : 'border-gray-50'}`}
+                    />
+                    {errors.shipping_name && <p className="text-[10px] font-bold text-red-500 ml-1">{errors.shipping_name}</p>}
+                 </div>
+                 <div className="space-y-2">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-gray-400">Phone Number</label>
+                    <input
+                      type="tel"
+                      placeholder="06 XX XX XX XX"
+                      value={form.shipping_phone}
+                      onChange={(e) => update('shipping_phone', e.target.value)}
+                      className={`w-full bg-gray-50 border-2 rounded-2xl px-5 py-4 font-bold text-gray-900 focus:bg-white focus:border-[#E62E04] transition-all outline-none ${errors.shipping_phone ? 'border-red-500 bg-red-50/30' : 'border-gray-50'}`}
+                    />
+                    {errors.shipping_phone && <p className="text-[10px] font-bold text-red-500 ml-1">{errors.shipping_phone}</p>}
+                 </div>
+                 <div className="space-y-2 sm:col-span-2">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-gray-400">Full Address</label>
+                    <input
+                      type="text"
+                      placeholder="Street name, Apartment number, Landmark"
+                      value={form.shipping_address}
+                      onChange={(e) => update('shipping_address', e.target.value)}
+                      className={`w-full bg-gray-50 border-2 rounded-2xl px-5 py-4 font-bold text-gray-900 focus:bg-white focus:border-[#E62E04] transition-all outline-none ${errors.shipping_address ? 'border-red-500 bg-red-50/30' : 'border-gray-50'}`}
+                    />
+                    {errors.shipping_address && <p className="text-[10px] font-bold text-red-500 ml-1">{errors.shipping_address}</p>}
+                 </div>
+                 <div className="space-y-2">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-gray-400">City</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Casablanca"
+                      value={form.shipping_city}
+                      onChange={(e) => update('shipping_city', e.target.value)}
+                      className={`w-full bg-gray-50 border-2 rounded-2xl px-5 py-4 font-bold text-gray-900 focus:bg-white focus:border-[#E62E04] transition-all outline-none ${errors.shipping_city ? 'border-red-500 bg-red-50/30' : 'border-gray-50'}`}
+                    />
+                    {errors.shipping_city && <p className="text-[10px] font-bold text-red-500 ml-1">{errors.shipping_city}</p>}
+                 </div>
               </div>
-            </header>
+            </section>
 
-            <div className="glass-panel p-10 md:p-14 rounded-[4rem] shadow-premium border-white/40">
-              <AnimatePresence mode="wait">
-                {step === 1 && (
-                  <motion.div 
-                    key="step1"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    className="space-y-8"
-                  >
-                    <div className="space-y-6">
-                      <div className="space-y-2">
-                        <label className="text-[10px] uppercase tracking-widest font-bold text-wood/30 ml-2">Full Name</label>
-                        <input
-                          type="text"
-                          placeholder="E.g. Omar Khalid"
-                          value={form.shipping_name}
-                          onChange={(e) => update('shipping_name', e.target.value)}
-                          className="premium-input w-full"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] uppercase tracking-widest font-bold text-wood/30 ml-2">Phone Number</label>
-                        <input
-                          type="tel"
-                          placeholder="+212 600 000 000"
-                          value={form.shipping_phone}
-                          onChange={(e) => update('shipping_phone', e.target.value)}
-                          className="premium-input w-full"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] uppercase tracking-widest font-bold text-wood/30 ml-2">Delivery Address</label>
-                        <input
-                          type="text"
-                          placeholder="Street name, Apartment, etc."
-                          value={form.shipping_address}
-                          onChange={(e) => update('shipping_address', e.target.value)}
-                          className="premium-input w-full"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-[10px] uppercase tracking-widest font-bold text-wood/30 ml-2">City</label>
-                          <input
-                            type="text"
-                            placeholder="Marrakech"
-                            value={form.shipping_city}
-                            onChange={(e) => update('shipping_city', e.target.value)}
-                            className="premium-input w-full"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] uppercase tracking-widest font-bold text-wood/30 ml-2">Country</label>
-                          <input
-                            type="text"
-                            placeholder="Morocco"
-                            value={form.shipping_country}
-                            onChange={(e) => update('shipping_country', e.target.value)}
-                            className="premium-input w-full"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {step === 2 && (
-                  <motion.div 
-                    key="step2"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    className="space-y-8"
-                  >
-                    <div className="space-y-4">
-                      {shippingMethods.map((m) => (
-                        <label 
-                          key={m.id} 
-                          className={`flex items-center gap-6 p-8 rounded-[2.5rem] border-2 transition-all cursor-pointer ${form.delivery_method === m.id.toString() ? 'border-gold bg-gold/5 shadow-lg' : 'border-white/40 bg-white/10 hover:bg-white/30'}`}
-                        >
-                          <input 
-                            type="radio" 
-                            name="delivery" 
-                            className="hidden"
-                            checked={form.delivery_method === m.id.toString()} 
-                            onChange={() => update('delivery_method', m.id.toString())} 
-                          />
-                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${form.delivery_method === m.id.toString() ? 'border-gold' : 'border-wood/20'}`}>
-                             {form.delivery_method === m.id.toString() && <div className="w-3 h-3 bg-gold rounded-full" />}
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-heading text-xl text-wood font-bold">{m.name}</p>
-                            {m.estimated_days && <p className="text-[11px] text-wood/40 uppercase tracking-widest font-bold mt-1">{m.estimated_days}</p>}
-                          </div>
-                          <div className="text-right">
-                             <p className="text-gold font-bold">{formatPrice(m.price)}</p>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-
-                {step === 3 && (
-                  <motion.div 
-                    key="step3"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    className="space-y-6"
-                  >
-                    {[
-                      { id: 'cash', label: 'Cash on Delivery', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.407 2.651 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.407-2.651-1M12 16V5' },
-                      { id: 'card', label: 'Credit Card (Stripe)', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z' },
-                      { id: 'paypal', label: 'PayPal Checkout', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' }
-                    ].map((p) => (
-                      <label 
-                        key={p.id} 
-                        className={`flex items-center gap-6 p-8 rounded-[2.5rem] border-2 transition-all cursor-pointer ${form.payment_method === p.id ? 'border-gold bg-gold/5 shadow-lg' : 'border-white/40 bg-white/10 hover:bg-white/30'}`}
-                      >
-                        <input type="radio" name="payment" className="hidden" checked={form.payment_method === p.id} onChange={() => update('payment_method', p.id)} />
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${form.payment_method === p.id ? 'border-gold' : 'border-wood/20'}`}>
-                           {form.payment_method === p.id && <div className="w-3 h-3 bg-gold rounded-full" />}
-                        </div>
-                        <div className="w-12 h-12 bg-gold/5 rounded-2xl flex items-center justify-center text-gold">
-                           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={p.icon} /></svg>
-                        </div>
-                        <span className="font-heading text-xl text-wood font-bold">{p.label}</span>
-                      </label>
-                    ))}
-                  </motion.div>
-                )}
-
-                {step === 4 && (
-                  <motion.div 
-                    key="step4"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    className="space-y-12"
-                  >
-                    <div className="space-y-6">
-                      <h3 className="text-[11px] uppercase tracking-[0.2em] font-bold text-wood/30 border-b border-wood/5 pb-4">The Selection</h3>
-                      <div className="space-y-4">
-                        {items.map((i) => (
-                          <div key={i.productId} className="flex justify-between items-center group">
-                            <div className="flex items-center gap-4">
-                               <div className="w-12 h-12 rounded-xl overflow-hidden bg-beige ring-1 ring-wood/5">
-                                  <img src={i.product.images?.[0]} className="w-full h-full object-cover" />
-                               </div>
-                               <div>
-                                  <p className="text-sm font-bold text-wood">{i.product.name}</p>
-                                  <p className="text-[10px] text-wood/40 uppercase font-bold tracking-widest">Qty: {i.quantity}</p>
-                               </div>
-                            </div>
-                            <span className="text-sm font-bold text-wood">{(Number(i.product.price) * i.quantity).toLocaleString()} <span className="text-[10px]">MAD</span></span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 gap-12">
-                       <div className="space-y-4">
-                          <h3 className="text-[11px] uppercase tracking-[0.2em] font-bold text-wood/30 border-b border-wood/5 pb-2">Shipped To</h3>
-                          <div className="text-[13px] text-wood/60 leading-relaxed font-serif">
-                             <p className="font-bold text-wood mb-1">{form.shipping_name}</p>
-                             <p>{form.shipping_address}</p>
-                             <p>{form.shipping_city}, {form.shipping_country}</p>
-                             <p>{form.shipping_phone}</p>
-                          </div>
-                       </div>
-                       <div className="space-y-4">
-                          <h3 className="text-[11px] uppercase tracking-[0.2em] font-bold text-wood/30 border-b border-wood/5 pb-2">Payment</h3>
-                          <div className="text-[13px] text-wood/60 leading-relaxed font-serif italic capitalize">
-                             {form.payment_method === 'cash' ? 'Pay upon delivery' : `${form.payment_method} Secure Payment`}
-                          </div>
-                       </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="mt-16 flex flex-col sm:flex-row gap-4">
-                {step > 1 && (
-                  <button 
-                    type="button" 
-                    onClick={() => setStep((s) => s - 1)} 
-                    className="px-10 py-5 text-[11px] uppercase tracking-widest font-bold text-wood/30 hover:text-wood transition"
-                  >Back</button>
-                )}
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={loading || (step === 1 && !form.shipping_name.trim())}
-                  className="premium-button bg-wood text-cream flex-1 shadow-xl hover:shadow-2xl transition-all disabled:opacity-50"
-                >
-                  {step < 4 ? 'Continue the Journey' : loading ? 'Crafting Order…' : 'Place Narrative Order'}
-                </button>
+            {/* Hardcoded Payment Method - Simple System */}
+            <section className="space-y-6">
+              <h2 className="text-2xl font-black text-gray-900 tracking-tight">Payment Method</h2>
+              <div className="flex items-center gap-5 p-6 rounded-3xl border-2 border-[#E62E04] bg-red-50/10">
+                 <div className="w-6 h-6 rounded-full border-2 border-[#E62E04] flex items-center justify-center">
+                    <div className="w-3 h-3 bg-[#E62E04] rounded-full" />
+                 </div>
+                 <div className="flex-1">
+                    <p className="font-black text-gray-900 uppercase text-sm tracking-wide">Cash on Delivery</p>
+                    <p className="text-xs text-gray-500 font-bold tracking-tight">Pay safely at your doorstep</p>
+                 </div>
+                 <svg className="w-8 h-8 text-[#E62E04]/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
               </div>
-            </div>
+            </section>
           </div>
 
-          {/* Right Summary */}
-          <div className="sticky top-32">
-             <div className="glass-panel p-10 rounded-[40px] shadow-premium space-y-10 border-white/60">
-                <h2 className="font-heading text-3xl text-wood font-bold">The Balance</h2>
+          {/* Right Column: Sticky Summary */}
+          <div className="lg:col-span-5 lg:sticky lg:top-8">
+             <div className="bg-gray-50 rounded-[40px] p-8 md:p-10 space-y-10 border border-gray-100">
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight">Order Summary</h2>
                 
-                <div className="space-y-6 text-sm">
-                   <div className="flex justify-between items-center text-wood/60">
-                      <span>Refined Subtotal</span>
-                      <span className="font-bold">{formatPrice(subtotal)}</span>
-                   </div>
-                   <div className="flex justify-between items-center text-wood/60">
-                      <span>Artisan Tax ({taxRate * 100}%)</span>
-                      <span className="font-bold">{formatPrice(taxAmount)}</span>
-                   </div>
-                   <div className="flex justify-between items-center text-wood/60">
-                      <span>Courier Concierge</span>
-                      <span className="font-bold">{shippingCost === 0 ? 'COMPLIMENTARY' : formatPrice(shippingCost)}</span>
-                   </div>
-                   {appliedCoupon && (
-                     <div className="flex justify-between items-center text-olive">
-                        <span className="flex items-center gap-2">
-                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
-                           Gift Certificate Applied
-                        </span>
-                        <span className="font-bold">-{discountAmount.toLocaleString()} MAD</span>
-                     </div>
-                   )}
-                   <div className="pt-8 border-t border-wood/5 flex justify-between items-end">
-                      <span className="font-heading text-2xl text-wood font-bold">Total Investment</span>
-                      <div className="text-right">
-                         <p className="text-wood font-bold text-4xl font-heading leading-none">{formatPrice(finalTotal)}</p>
+                {/* Product List */}
+                <div className="space-y-6 max-h-[300px] overflow-y-auto pr-4 custom-scrollbar">
+                   {items.map((i) => (
+                      <div key={i.productId} className="flex gap-4">
+                         <div className="w-16 h-16 rounded-2xl bg-white border border-gray-100 flex-shrink-0 overflow-hidden">
+                            <img src={i.product.images?.[0] || 'https://placehold.co/100'} className="w-full h-full object-cover" />
+                         </div>
+                         <div className="flex-1">
+                            <p className="font-bold text-gray-900 leading-tight line-clamp-2">{i.product.name}</p>
+                            <p className="text-xs text-gray-400 font-black tracking-widest uppercase mt-1">QTY: {i.quantity} × {formatPrice(i.product.price)}</p>
+                         </div>
                       </div>
-                   </div>
+                   ))}
                 </div>
 
-                <div className="bg-white/40 p-10 rounded-[3rem] space-y-4 shadow-inner ring-1 ring-white/60">
-                   <p className="text-[11px] uppercase tracking-widest font-bold text-wood/30 mb-2">Have a privilege code?</p>
-                   <div className="relative group">
+                {/* Promo Code */}
+                <div className="space-y-3">
+                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Gift Certificate or Coupon</p>
+                   <div className="flex gap-2">
                       <input
                         type="text"
                         placeholder="ENTER CODE"
-                        className="premium-input w-full uppercase font-mono tracking-widest text-sm"
+                        className="flex-1 bg-white border border-gray-200 rounded-2xl px-5 py-3 font-bold text-sm tracking-widest outline-none focus:border-[#E62E04] transition-all"
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                         disabled={appliedCoupon}
@@ -410,13 +249,61 @@ export default function Checkout() {
                       <button
                         onClick={handleApplyCoupon}
                         disabled={validatingCoupon || appliedCoupon || !couponCode}
-                        className="absolute right-2 top-2 px-4 py-3 bg-wood text-cream rounded-[1.5rem] text-[10px] uppercase font-bold tracking-widest hover:bg-gold transition disabled:opacity-0"
-                      >{validatingCoupon ? '...' : 'Verify'}</button>
+                        className="bg-gray-900 text-white px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all disabled:opacity-30"
+                      >
+                        {validatingCoupon ? '...' : 'Apply'}
+                      </button>
                    </div>
                    {appliedCoupon && (
-                     <button onClick={() => {setAppliedCoupon(null); setCouponCode('');}} className="text-[10px] text-red-400 font-bold uppercase tracking-widest hover:underline ml-2">Remove Privilege</button>
+                      <div className="flex items-center justify-between px-2">
+                         <span className="text-emerald-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                            Coupon Applied
+                         </span>
+                         <button onClick={() => {setAppliedCoupon(null); setCouponCode('');}} className="text-red-500 text-[9px] font-black uppercase hover:underline">Remove</button>
+                      </div>
                    )}
                 </div>
+
+                {/* Totals */}
+                <div className="space-y-4 pt-6 border-t border-gray-200/60">
+                   <div className="flex justify-between items-center text-sm font-bold text-gray-500">
+                      <span>Subtotal</span>
+                      <span className="text-gray-900">{formatPrice(subtotal)}</span>
+                   </div>
+                   <div className="flex justify-between items-center text-sm font-bold text-gray-500">
+                      <span>Shipping Fee</span>
+                      <span className={shippingCost === 0 ? 'text-[#00A854]' : 'text-gray-900'}>
+                         {shippingCost === 0 ? 'FREE' : formatPrice(shippingCost)}
+                      </span>
+                   </div>
+                   {appliedCoupon && (
+                      <div className="flex justify-between items-center text-sm font-bold text-[#00A854]">
+                         <span>Discount</span>
+                         <span>-{formatPrice(discountAmount)}</span>
+                      </div>
+                   )}
+                   <div className="pt-6 border-t border-gray-200/60 flex justify-between items-end">
+                      <div>
+                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total to Pay</p>
+                         <p className="text-5xl font-black text-gray-900 tracking-tighter">{formatPrice(finalTotal)}</p>
+                      </div>
+                   </div>
+                </div>
+
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className={`w-full py-6 rounded-3xl font-black uppercase tracking-[0.2em] shadow-2xl transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-4 ${
+                     form.payment_method === 'cash' ? 'bg-[#E62E04] text-white shadow-red-200' : 'bg-[#00A854] text-white shadow-emerald-200'
+                  }`}
+                >
+                  {loading ? (
+                     <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  ) : (
+                     <>{form.payment_method === 'cash' ? 'Place Order (COD)' : 'Secure Pay & Order'}</>
+                  )}
+                </button>
              </div>
           </div>
 
